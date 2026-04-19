@@ -46,3 +46,6 @@ debug:
 
 debug2:
 	(. ./activate; pio debug -e tinydro2 --interface=gdb -- -x .pioinit)
+
+debug2b:
+	(. ./activate; pio debug -e tinydro2_boot --interface=gdb -- -x .pioinit)

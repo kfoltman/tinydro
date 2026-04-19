@@ -8,7 +8,7 @@ Buzzer buzzer;
 
 void App::init()
 {
-    //eeprom.init();
+    eeprom.init();
     buzzer.init();
     touchscreen.init();
     encX.init();
