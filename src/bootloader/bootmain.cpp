@@ -114,11 +114,11 @@ void eraseSectors(int sector, int nsectors)
     int status = HAL_FLASHEx_Erase(&erase_data, &sector_error);
     HAL_FLASH_Lock();
     if (status == HAL_OK) {
-        serial.writestr("OK\r\n");
+        serial.writeStr("OK\r\n");
     } else {
-        serial.writestr("Failed\r\n");
-        serial.writehex(sector_error);
-        serial.writestr("\r\n");
+        serial.writeStr("Failed\r\n");
+        serial.writeHex(sector_error);
+        serial.writeStr("\r\n");
     }
     serial.flush();
 }
@@ -131,9 +131,9 @@ void getAppChecksum()
     for (const uint32_t *p = app_start; p != app_end; ++p) {
         checksum += *p;
     }
-    serial.writestr("Checksum=");
-    serial.writehex(checksum);
-    serial.writestr("\r\n");
+    serial.writeStr("Checksum=");
+    serial.writeHex(checksum);
+    serial.writeStr("\r\n");
     serial.flush();
 }
 
@@ -153,7 +153,7 @@ void programFlash()
     uint32_t pos = 0;
     do {
         if (pos >= sizeof(line)) {
-            serial.writestr("Overflow\r\n");
+            serial.writeStr("Overflow\r\n");
             serial.flush();
             return;
         }
@@ -173,7 +173,7 @@ void programFlash()
         pos++;
     }
     if (line[pos] != ':') {
-        serial.writestr("BadChar\r\n");
+        serial.writeStr("BadChar\r\n");
         serial.flush();
         return;
     }
@@ -199,11 +199,11 @@ void programFlash()
     }
     HAL_FLASH_Lock();
     if (line[pos] != '\0') {
-        serial.writestr("BadEnd\r\n");
+        serial.writeStr("BadEnd\r\n");
         serial.flush();
         return;
     }
-    serial.writestr("OK\r\n");
+    serial.writeStr("OK\r\n");
     serial.flush();
 }
 
@@ -216,7 +216,7 @@ int main()
     serial.init();
     
     while (timeSinceLastChar < 2000) {
-        if (serial.is_active()) {
+        if (serial.isActive()) {
             uint8_t ch;
             if (serial.read(&ch, 1)) {
                 serial.write(&ch, 1);
@@ -230,7 +230,7 @@ int main()
                 if (ch == 'E')
                     eraseSectors(4, 4);
                 if (ch == 'Q') {
-                    serial.writestr("Echo\r\n");
+                    serial.writeStr("Echo\r\n");
                     serial.flush();
                 }
                 if (ch == 'p') {

@@ -6,17 +6,9 @@ int globalTime{0};
 
 Buzzer buzzer;
 
-#ifndef DESKTOPSIM
-
-#include "thermocouple.h"
-
-Thermocouple thermocouple;
-
-#endif
-
 void App::init()
 {
-    eeprom.init();
+    //eeprom.init();
     buzzer.init();
     touchscreen.init();
     encX.init();
@@ -51,9 +43,6 @@ void App::init()
         screen->dirty();
         calibrationScreen.startCalibration();
     };
-#ifndef DESKTOPSIM
-    thermocouple.init();
-#endif
     last_poll_ms = HAL_GetTick();
 }
 
@@ -88,13 +77,6 @@ void App::loop()
     uint16_t poll_ms = HAL_GetTick();
     if (uint16_t(poll_ms - last_poll_ms) >= 10)
     {
-#if 0
-        int value = thermocouple.readTemp() >> 12;
-        int fault = thermocouple.readReg(0x0F);
-        char buf[32];
-        sprintf(buf, "Read: %d Fault:%x", value, fault);
-        mainScreen.debug_label.setText(buf);
-#endif
         
         TouchscreenEvent event;
         touchscreen.poll(event);
