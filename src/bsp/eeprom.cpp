@@ -125,6 +125,9 @@ bool EEPROM::fetchBank(uint32_t *bank_data)
 
 void EEPROM::eraseBank(int bank)
 {
+#ifdef MCU_IS_STM32H7
+    return;
+#endif
 #ifdef DESKTOPSIM
     memset(&eeprom_data[bank][0], 0xFF, BANK_SIZE);
 #else
@@ -161,6 +164,9 @@ void EEPROM::initBank(int bank)
 
 void EEPROM::programWord(int addr, uint32_t value)
 {
+#ifdef MCU_IS_STM32H7
+    return;
+#endif
 #ifdef DESKTOPSIM
     uint32_t mem = eeprom_data[cur_bank][addr];
     // Verify that we're not trying to change any bits from '0' to '1' - that would require an erase operation!
@@ -168,7 +174,11 @@ void EEPROM::programWord(int addr, uint32_t value)
     eeprom_data[cur_bank][addr] = value;
 #else
     uint32_t base = 0x08008000 + 0x4000 * cur_bank;
+#ifdef STM32H7
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, base + addr * 4, value);
+#else
     HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, base + addr * 4, value);
+#endif
 #endif
 }
 

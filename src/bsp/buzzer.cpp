@@ -17,9 +17,8 @@ void Buzzer::init()
 #ifndef DESKTOPSIM    
 void Buzzer::onImpl(int period)
 {
-    Pin{GPIOE, 5}.setAsAlt(3); // AF3_TIM9
-    
-    TIM_HandleTypeDef timer = {.Instance = TIM9};
+    BUZZER_PIN.setAsAlt(BUZZER_PIN_AF);
+    TIM_HandleTypeDef timer = {.Instance = BUZZER_TIMER};
     TIM_OC_InitTypeDef channelConfig = {};
 
     timer.Init.Period = period;
@@ -41,10 +40,10 @@ void Buzzer::onImpl(int period)
 void Buzzer::off()
 {
 #ifndef DESKTOPSIM
-    TIM_HandleTypeDef timer = {.Instance = TIM9};
+    TIM_HandleTypeDef timer = {.Instance = BUZZER_TIMER};
     HAL_TIM_OC_Stop(&timer, TIM_CHANNEL_1);
 
-    Pin(GPIOE, 5).setAsOutput().reset();
+    BUZZER_PIN.setAsOutput().reset();
 #endif
 }
 

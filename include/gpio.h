@@ -18,7 +18,7 @@ static inline int HAL_GetTick()
 
 #else
 
-#include <stm32f4xx_hal.h>
+#include "hwdefs.h"
 
 struct Pin
 {

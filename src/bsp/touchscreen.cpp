@@ -82,17 +82,23 @@ void Touchscreen::init()
     SPI.Init.CLKPolarity = SPI_POLARITY_LOW;
     SPI.Init.CLKPhase = SPI_PHASE_1EDGE;
     SPI.Init.NSS = SPI_NSS_SOFT;
+#ifdef MCU_IS_STM32H7
+    SPI.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+#else
     SPI.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+#endif
     SPI.Init.FirstBit = SPI_FIRSTBIT_MSB;
     SPI.Init.TIMode = SPI_TIMODE_DISABLE;
     SPI.Init.CRCCalculation = false;
     SPI.Init.CRCPolynomial = 0;
     HAL_SPI_Init(&SPI);
-    
-    __HAL_RCC_DMA1_CLK_ENABLE();
-    
+        
     DMARx.Instance = DMA1_Stream3;
-    DMARx.Init.Channel = DMA_CHANNEL_0;
+#ifdef MCU_IS_STM32H7
+    DMARx.Init.Request = TOUCHSCREEN_DMA_REQUEST_RX;
+#else
+    DMARx.Init.Channel = TOUCHSCREEN_DMA_CHANNEL;
+#endif
     DMARx.Init.Direction = DMA_PERIPH_TO_MEMORY;
     DMARx.Init.PeriphInc = DMA_PINC_DISABLE;
     DMARx.Init.MemInc = DMA_MINC_ENABLE;
@@ -107,7 +113,11 @@ void Touchscreen::init()
     HAL_DMA_Init(&DMARx);
     
     DMATx.Instance = DMA1_Stream4;
-    DMATx.Init.Channel = DMA_CHANNEL_0;
+#ifdef MCU_IS_STM32H7
+    DMATx.Init.Request = TOUCHSCREEN_DMA_REQUEST_TX;
+#else
+    DMATx.Init.Channel = TOUCHSCREEN_DMA_CHANNEL;
+#endif
     DMATx.Init.Direction = DMA_MEMORY_TO_PERIPH;
     DMATx.Init.PeriphInc = DMA_PINC_DISABLE;
     DMATx.Init.MemInc = DMA_MINC_ENABLE;
@@ -128,6 +138,8 @@ void Touchscreen::init()
     HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
     HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 8, 0);
     HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+    HAL_NVIC_SetPriority(SPI2_IRQn, 8, 2);
+    HAL_NVIC_EnableIRQ(SPI2_IRQn);
     
     int mode = 0;
     int ser = 0;
@@ -149,54 +161,6 @@ void Touchscreen::init()
     quit = false;
     ready = true;
 }
-
-#if 0
-static inline int CycleXPTBit()
-{
-    for (volatile int i = 0; i < 40; ++i)
-        ;
-    TOUCH_SCK.set();
-    int value = TOUCH_DOUT.read();
-    for (volatile int i = 0; i < 40; ++i)
-        ;
-    TOUCH_SCK.reset();
-    return value;
-}
-
-int ShiftXPT_sw(int addr, int mode, int ser, int pd)
-{
-    TOUCH_CSN.reset();
-    TOUCH_DIN.set(); // Start bit
-    CycleXPTBit();
-    TOUCH_DIN.write(addr & 4); // A2
-    CycleXPTBit();
-    TOUCH_DIN.write(addr & 2); // A1
-    CycleXPTBit();
-    TOUCH_DIN.write(addr & 1); // A0
-    CycleXPTBit();
-    TOUCH_DIN.write(mode != 0); // mode
-    CycleXPTBit();
-    TOUCH_DIN.write(ser); // ser/dfr
-    CycleXPTBit();
-    TOUCH_DIN.write(pd & 2); // pd1
-    CycleXPTBit();
-    TOUCH_DIN.write(pd & 1); // pd0
-    CycleXPTBit();
-    TOUCH_DIN.write(0); // avoid DIN being interpreted as a start bit
-    CycleXPTBit();
-    while(TOUCH_BUSY.read())
-        ;
-    int result = 0;
-    for (int i = 0; i < 16; ++i) {
-        result = result * 2 + CycleXPTBit();
-    }
-    
-    TOUCH_CSN.set();
-    for (volatile int i = 0; i < 240; ++i)
-        ;
-    return result;
-}
-#endif
 
 void Touchscreen::onSystick()
 {
@@ -254,7 +218,7 @@ void Touchscreen::onDataReady()
     in_progress = false;
 }
 
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+extern "C" void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     Touchscreen::instance->onDataReady();
 }
@@ -271,6 +235,11 @@ extern "C" void DMA1_Stream3_IRQHandler(void)
 extern "C" void DMA1_Stream4_IRQHandler(void)
 {
     HAL_DMA_IRQHandler(&Touchscreen::instance->DMATx);
+}
+
+extern "C" void SPI2_IRQHandler(void)
+{
+    HAL_SPI_IRQHandler(&Touchscreen::instance->SPI);
 }
 
 TouchscreenEvent::Type Touchscreen::poll(TouchscreenEvent &event)

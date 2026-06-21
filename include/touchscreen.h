@@ -41,6 +41,8 @@ public:
     volatile bool ready : 1;
     volatile bool in_progress : 1;
     unsigned cycle;
+
+    Touchscreen() : DMATx{}, DMARx{}, SPI{}, cycle{} {}
     void onDataReady();
 #endif
 public:

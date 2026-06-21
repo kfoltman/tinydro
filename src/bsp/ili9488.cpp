@@ -35,14 +35,28 @@ static inline uint16_t LCD_DATA_GET()
 
 void ILI9488LCD::init()
 {
-    HAL_Delay(1);
+    HAL_Delay(10);
+
+#ifdef MCU_IS_STM32H7
+    uint32_t bcr =  (1 << 31) |
+                    (0 << 14) |  // EXTMOD (diffferent timings for R vs W)
+                    (1 << 12) |  // write enable
+                    (1 << 7) | // reserved
+                    (1 << 4) | // 16 bit bus width
+                    (0 << 2) | // NOR flash
+                    1;
+
+    uint32_t btr = (3 << 20) | (7 << 16) | (7 << 8) | (7 << 4) | (7 << 0);
     
+    *(volatile uint32_t *)0x52004000 = bcr;
+    *(volatile uint32_t *)0x52004004 = btr;
+#else
     uint32_t bcr =  (1 << 14) |  // EXTMOD (diffferent timings for R vs W)
                     (1 << 12) |  // write enable
                     (1 << 7) | // reserved
                     (1 << 4) | // 16 bit bus width
                     (0 << 2) | // SRAM/ROM
-                    1; 
+                    1;
     
     uint32_t btr = (0 << 20) | (3 << 16) | (3 << 8) | (3 << 4) | (3 << 0);
     uint32_t bwtr = (0 << 20) | (2 << 16) | (2 << 8) | (2 << 4) | (2 << 0);
@@ -50,10 +64,10 @@ void ILI9488LCD::init()
     btr = (1 << 16) | (1 << 8) | (1 << 4) | (1 << 0);
     bwtr = (0 << 20) | (1 << 16) | (1 << 8) | (1 << 4) | (2 << 0);
 
-    
-    *(uint32_t *)0xA0000000 = bcr;
-    *(uint32_t *)0xA0000004 = btr;
-    *(uint32_t *)0xA0000104 = bwtr;
+    *(volatile uint32_t *)0xA0000000 = bcr;
+    *(volatile uint32_t *)0xA0000004 = btr;
+    *(volatile uint32_t *)0xA0000104 = bwtr;
+#endif
     HAL_Delay(10);
     
     // Set alternate function and speed
@@ -63,13 +77,13 @@ void ILI9488LCD::init()
     fsmcPinRange(GPIOD, 14, 15);
     fsmcPinRange(GPIOE, 7, 15);
 
-#ifdef BOARD_V2
+#ifndef LCD_RESET_HACK
     // Dedicated reset pin
     Pin{GPIOA, 7}.setAsOutput();
     Pin{GPIOA, 7}.reset();
-    HAL_Delay(30);
+    HAL_Delay(20);
     Pin{GPIOA, 7}.set();
-    HAL_Delay(30);
+    HAL_Delay(20);
     int BRIGHTNESS = 99;
 #else
     // SPI pins (PA6 acting as reset)
@@ -84,10 +98,30 @@ void ILI9488LCD::init()
     int BRIGHTNESS = 50;
 #endif
     
+    LCD_CMD(0x11);  // Sleep OUT
+
+    HAL_Delay(20);
+
+    LCD_CMD(0x36, {0x28}); // memory access control
+    LCD_CMD(0x3A, {0x55});  // Interface pixel format: 16-bit
+    LCD_CMD(0XB0, {0x00});  // Interface Mode Control
+    LCD_CMD(0xB4, {0x02}); // inversion control
+    LCD_CMD(0xE9, {0x00});
+
+    HAL_Delay(20);
+
+    LCD_CMD(0x34);  // Tearing OFF
+    LCD_CMD(0x29);  // Display ON
+    LCD_CMD(0x38);  // Idle OFF
+    LCD_CMD(0x13);  // Normal mode ON
+#ifdef LCD_IS_IPS
+    LCD_CMD(0x21);  // Display inversion ON
+#endif
+
     // PWM
-    Pin{GPIOB, 14}.setAsAlt(9);
-    
-    TIM_HandleTypeDef timer = {.Instance = TIM12};
+    LCD_PWM_PIN.setAsAlt(LCD_PWM_PIN_AF);
+
+    TIM_HandleTypeDef timer = {.Instance = LCD_PWM_TIMER};
     TIM_OC_InitTypeDef channelConfig = {};
 
     int timebase = 40000;
@@ -103,25 +137,6 @@ void ILI9488LCD::init()
     channelConfig.Pulse = BRIGHTNESS;
     HAL_TIM_OC_ConfigChannel(&timer, &channelConfig, TIM_CHANNEL_1);
     HAL_TIM_OC_Start(&timer, TIM_CHANNEL_1);
-    LCD_CMD(0x11);  // Sleep OUT
-
-    HAL_Delay(10);
-
-    LCD_CMD(0x36, {0x28}); // memory access control
-    LCD_CMD(0x3A, {0x55});  // Interface pixel format: 16-bit
-    LCD_CMD(0XB0, {0x00});  // Interface Mode Control
-    LCD_CMD(0xB4, {0x02}); // inversion control
-    LCD_CMD(0xE9, {0x00});
-
-    HAL_Delay(10);
-
-    LCD_CMD(0x34);  // Tearing OFF
-    LCD_CMD(0x29);  // Display ON
-    LCD_CMD(0x38);  // Idle OFF
-    LCD_CMD(0x13);  // Normal mode ON
-#ifdef BOARD_V2
-    LCD_CMD(0x21);  // Display inversion ON
-#endif
 }
 
 volatile uint16_t *ILI9488LCD::startPixels(uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey)
