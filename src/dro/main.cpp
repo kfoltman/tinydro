@@ -5,12 +5,14 @@
 #include "app.h"
 #include "buzzer.h"
 #include "usbacm.h"
+#include "ws2812b.h"
 
 #define PA12 Pin{GPIOA, 12}
 
 ILI9488LCD lcd;
 App app;
 USB_ACM serial;
+WS2812B rgbled;
 
 #define LED1 Pin{GPIOC, 4}
 #define LED2 Pin{GPIOC, 5}
@@ -174,18 +176,20 @@ void InitClocks()
     __HAL_RCC_SYSCFG_CLK_ENABLE();
     HAL_EnableCompensationCell();
 
-    // Encoder clocks
+    // Encoder timers (quadrature decoders/counters)
     __HAL_RCC_TIM2_CLK_ENABLE();
     __HAL_RCC_TIM3_CLK_ENABLE();
     __HAL_RCC_TIM4_CLK_ENABLE();
+    // WS2812B timer
+    __HAL_RCC_TIM5_CLK_ENABLE();
     // Buzzer timer
     HAL_BUZZER_CLK_ENABLE();
     // Display PWM
     __HAL_RCC_TIM12_CLK_ENABLE();
     // Touchscreen SPI
     __HAL_RCC_SPI2_CLK_ENABLE();
-    // Touchscreen DMA
-    __HAL_RCC_MDMA_CLK_ENABLE();
+    // Touchscreen and WS2812B DMA
+    __HAL_RCC_MDMA_CLK_ENABLE(); // not sure if needed?
     __HAL_RCC_DMA1_CLK_ENABLE();
     // GPIOs
     __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -224,6 +228,7 @@ void setup()
     LED1.reset();
     serial.init();
     lcd.init();
+    rgbled.init();
     app.init();
 }
 
@@ -239,6 +244,14 @@ void loop()
     } else {
         LED1.set();
         LED2.reset();
+    }
+    if ((globalTime & 7) == 0) {
+        uint8_t wave = (globalTime & 255) ^ (globalTime & 256 ? 255 : 0);
+        rgbled.colours[0] = (wave);
+        rgbled.colours[1] = (wave) << 8;
+        rgbled.colours[2] = (wave) << 16;
+        rgbled.colours[3] = rgbled.colours[0] | rgbled.colours[1] | rgbled.colours[2];
+        rgbled.update();
     }
 #endif
     if (serial.isActive()) {
