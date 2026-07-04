@@ -7,8 +7,10 @@ USB_ACM *USB_ACM::instance = nullptr;
 void USB_ACM::unplug()
 {
     HAL_Delay(100);
-    Pin{GPIOA, 12}.setAsInput();
+    Pin{GPIOA, 12}.setAsInputPullup();
+    Pin{GPIOA, 11}.setAsInputPulldown();
     HAL_Delay(100);
+    Pin{GPIOA, 11}.setAsAlt(10); // OTG FS
     Pin{GPIOA, 12}.setAsAlt(10); // OTG FS
 }
 
@@ -76,9 +78,6 @@ void USB_ACM::init()
     rx_active = false;
     
     unplug();
-
-    Pin{GPIOA, 11}.setAsAlt(10); // OTG FS
-    Pin{GPIOA, 12}.setAsAlt(10); // OTG FS
 
     USBD_Init(&USBD_Device, &ACM_Desc, 0);
     USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);

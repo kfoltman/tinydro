@@ -35,9 +35,12 @@ public:
     
     Pin() = default;
     Pin(GPIO_TypeDef *_GPIO, int _pin) : GPIO{_GPIO}, pin{_pin} {}
+    const Pin &setAsPushPull() const { mod<1>(GPIO->OTYPER, 0); return *this; }
+    const Pin &setAsOpenDrain() const { mod<1>(GPIO->OTYPER, 1); return *this; }
     const Pin &setAsOutput() const { mod<2>(GPIO->MODER, 1); return *this; }
     const Pin &setAsInput() const { mod<2>(GPIO->MODER, 0); mod<2>(GPIO->PUPDR, 0); return *this; }
     const Pin &setAsInputPullup() const { mod<2>(GPIO->MODER, 0); mod<2>(GPIO->PUPDR, 1); return *this; }
+    const Pin &setAsInputPulldown() const { mod<2>(GPIO->MODER, 0); mod<2>(GPIO->PUPDR, 2); return *this; }
     const Pin &setAsAlt(int numFunc) const {
         mod<2>(GPIO->MODER, 2);
         mod<4>(GPIO->AFR[pin >> 3], numFunc);

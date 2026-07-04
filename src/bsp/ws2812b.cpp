@@ -1,13 +1,19 @@
 #include "ws2812b.h"
 #include "gpio.h"
 
+#ifdef HAS_WS2812B
+
 #define PERIOD (150 * 2)
 
 static const uint32_t HI = (90 * PERIOD / 125);
 static const uint32_t LO = (35 * PERIOD / 125);
 
+// This becomes unreliable if it's not a multiple of 8 words (32 bytes).
+static constexpr uint32_t pwm_buffer_size = (48 + 24 * WS2812B::NUM_LEDS + 24 + 7) &~ 7;
+// static constexpr uint32_t pwm_buffer_size = 256;
+
 __attribute__((aligned(32)))
-static volatile uint32_t pwm_buffer[48 + 24 * WS2812B::NUM_LEDS + 24];
+static volatile uint32_t pwm_buffer[pwm_buffer_size];
 
 WS2812B *WS2812B::instance;
 
@@ -73,7 +79,10 @@ void WS2812B::update()
             pwm_buffer[48 + led * 24 + i] = (colours[led] & (1 << (23 - i))) ? HI : LO;
         }
     }
-    SCB_CleanDCache_by_Addr((uint32_t *)pwm_buffer, sizeof(pwm_buffer));
+    __disable_irq();
+    SCB_CleanDCache_by_Addr((uint32_t *)pwm_buffer, (sizeof(pwm_buffer) + 31) &~ 31);
+    __enable_irq();
     HAL_TIM_PWM_Start_DMA(&timer, TIM_CHANNEL_2, (const uint32_t *)pwm_buffer, sizeof(pwm_buffer) / 4);
 }
 
+#endif

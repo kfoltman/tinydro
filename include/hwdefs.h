@@ -58,3 +58,20 @@
 #else
 #define LCD_IS_IPS
 #endif
+
+// EEPROM
+#ifdef BOARD_V4
+#define EEPROM_IS_EXTERNAL
+#else
+#define EEPROM_IS_EMULATED
+#endif
+
+// WS2812B LEDs
+#ifdef BOARD_V4
+#define HAS_WS2812B
+#endif
+
+// Keypad
+#ifdef BOARD_V4
+#define HAS_KEYPAD
+#endif

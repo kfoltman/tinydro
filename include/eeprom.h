@@ -1,6 +1,31 @@
 #pragma once
 
+#include "hwdefs.h"
 #include <stdint.h>
+
+#ifndef EEPROM_IS_EMULATED
+
+#include <bitset>
+
+class EEPROM
+{
+    static const uint32_t NUM_WORDS = 64;
+
+    uint32_t words[NUM_WORDS];
+    std::bitset<NUM_WORDS> populated;
+
+    I2C_HandleTypeDef i2c{};
+    static const uint32_t i2c_addr = 0x50 << 1;
+public:
+    void init();
+    inline uint8_t read8(uint32_t addr) { return uint8_t(read32(addr &~ 3) >> ((addr & 3) << 3)); }
+    uint32_t read32(uint32_t addr);
+    void write8(uint32_t addr, uint8_t data);
+    void write32(uint32_t addr, uint32_t data);
+    void flush();
+};
+
+#else
 
 class EEPROM
 {
@@ -32,3 +57,5 @@ public:
     
     void flush();
 };
+
+#endif

@@ -6,13 +6,19 @@
 #include "buzzer.h"
 #include "usbacm.h"
 #include "ws2812b.h"
+#include "i2c_keypad.h"
 
 #define PA12 Pin{GPIOA, 12}
 
 ILI9488LCD lcd;
 App app;
 USB_ACM serial;
+#ifdef HAS_WS2812B
 WS2812B rgbled;
+#endif
+#ifdef HAS_KEYPAD
+I2C_Keypad keypad;
+#endif
 
 #define LED1 Pin{GPIOC, 4}
 #define LED2 Pin{GPIOC, 5}
@@ -26,6 +32,18 @@ extern "C" void SysTick_Handler(void)
 
 extern "C" void RCC_Handler(void)
 {
+}
+
+extern "C" void HardFault_Handler(void)
+{
+    while(1) {
+        LED2.setAsOutput().set();
+        LED1.setAsOutput().set();
+        HAL_Delay(100);
+        LED2.setAsOutput().reset();
+        LED1.setAsOutput().reset();
+        HAL_Delay(100);
+    }
 }
 
 extern "C" void WWDG_Handler(void)
@@ -121,7 +139,7 @@ void InitClocks()
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     RCC_OscInitStruct.PLL.PLLM = 5; // 25 -> 5 MHz
-    RCC_OscInitStruct.PLL.PLLN = 192; // 5 * 160 = 960
+    RCC_OscInitStruct.PLL.PLLN = 192; // 5 * 192 = 960
     RCC_OscInitStruct.PLL.PLLFRACN = 0;
     RCC_OscInitStruct.PLL.PLLP = 2; // 960 / 2 = 480
     RCC_OscInitStruct.PLL.PLLQ = 20; // 960 / 20 = 48 for usb
@@ -152,7 +170,10 @@ void InitClocks()
     RCC_PeriphInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
     RCC_PeriphInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
     //RCC_PeriphInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
-    HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphInitStruct);
+    if (HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
 
     // MPU region for the TFT
     HAL_MPU_Disable();
@@ -171,6 +192,8 @@ void InitClocks()
     MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_DISABLE;
     HAL_MPU_ConfigRegion(&MPU_InitStruct);
     HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+    // This may be needed for SCB_CleanDCache family functions to operate?
+    SCB_InvalidateDCache();
 
     __HAL_RCC_CSI_ENABLE();
     __HAL_RCC_SYSCFG_CLK_ENABLE();
@@ -191,6 +214,8 @@ void InitClocks()
     // Touchscreen and WS2812B DMA
     __HAL_RCC_MDMA_CLK_ENABLE(); // not sure if needed?
     __HAL_RCC_DMA1_CLK_ENABLE();
+    // Keypad
+    __HAL_RCC_I2C1_CLK_ENABLE();
     // GPIOs
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -203,6 +228,7 @@ void InitClocks()
     // Display bus
     __HAL_RCC_FMC_CLK_ENABLE();
     // USB
+    HAL_PWREx_EnableUSBVoltageDetector();
     __HAL_RCC_USB2_OTG_FS_CLK_ENABLE();
 }
 #endif
@@ -228,8 +254,13 @@ void setup()
     LED1.reset();
     serial.init();
     lcd.init();
+#ifdef HAS_WS2812B
     rgbled.init();
+#endif
     app.init();
+#ifdef HAS_KEYPAD
+    keypad.init();
+#endif
 }
 
 int resetTimer = 200;
@@ -246,11 +277,22 @@ void loop()
         LED2.reset();
     }
     if ((globalTime & 7) == 0) {
-        uint8_t wave = (globalTime & 255) ^ (globalTime & 256 ? 255 : 0);
-        rgbled.colours[0] = (wave);
-        rgbled.colours[1] = (wave) << 8;
-        rgbled.colours[2] = (wave) << 16;
-        rgbled.colours[3] = rgbled.colours[0] | rgbled.colours[1] | rgbled.colours[2];
+        auto wave = [](int value) -> uint8_t {
+            uint8_t tri = (value & 255) ^ (value & 256 ? 255 : 0);
+            return uint16_t(tri) * tri >> 8;
+        };
+        keypad.poll();
+        if (keypad.keys & 1) {
+            rgbled.colours[0] = wave(globalTime);
+            rgbled.colours[1] = wave(globalTime + 85) << 8;
+            rgbled.colours[2] = wave(globalTime + 170) << 16;
+            rgbled.colours[3] = rgbled.colours[0] | rgbled.colours[1] | rgbled.colours[2];
+        } else {
+            rgbled.colours[0] = 0x4;
+            rgbled.colours[1] = 0x400;
+            rgbled.colours[2] = 0x40000;
+            rgbled.colours[3] = 0x40404;
+        }
         rgbled.update();
     }
 #endif

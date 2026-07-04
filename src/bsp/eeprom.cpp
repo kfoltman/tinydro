@@ -8,7 +8,73 @@
 #define pcassert(...)
 #include "gpio.h"
 #endif
+// For memcpy/memset
 #include <cstring>
+
+void EEPROM::write8(uint32_t addr, uint8_t data) {
+    uint32_t shift = (addr & 3) << 3;
+    uint32_t oldv = words[addr >> 2];
+    write32(addr &~ 3, (oldv &~ (0xFF << shift)) | (uint32_t{data} << shift));
+}
+
+#ifndef EEPROM_IS_EMULATED
+
+void EEPROM::init()
+{
+    populated.reset();
+
+    // Common with the keypad, this should be made into a separate I2C class?
+    Pin{GPIOB, 8}.setAsAlt(4).setAsOpenDrain();
+    Pin{GPIOB, 9}.setAsAlt(4).setAsOpenDrain();
+
+    i2c.Instance = I2C1;
+    i2c.Init.Timing = (12 << 28) | (15 << 20) | (15 << 16) | (15 << 8) | 15; // 12 MHz : 30 = 400 kHz
+    i2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+    i2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+    i2c.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+    i2c.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+    HAL_I2C_Init(&i2c);
+
+    for (uint32_t i = 0; i < NUM_WORDS; ++i) {
+        read32(i << 2);
+    }
+}
+
+static constexpr uint8_t rshb(uint32_t value, uint32_t shift)
+{
+    return uint8_t(value >> shift);
+}
+
+uint32_t EEPROM::read32(uint32_t addr)
+{
+    uint8_t tx[2] = { rshb(addr, 8), rshb(addr, 0) };
+    if (HAL_I2C_Master_Transmit(&i2c, i2c_addr, tx, sizeof(tx), 100) == HAL_OK) {
+        uint8_t rx[4];
+        if (HAL_I2C_Master_Receive(&i2c, i2c_addr, rx, sizeof(rx), 100) == HAL_OK) {
+            uint32_t nw = addr >> 2;
+            words[nw] = rx[0] | (rx[1] << 8) | (rx[2] << 16) | (rx[3] << 24);
+            populated.set(nw);
+            return words[nw];
+        }
+    }
+    return 0xFFFFFFFF;
+}
+
+void EEPROM::write32(uint32_t addr, uint32_t data)
+{
+    uint8_t tx[6] = { rshb(addr, 8), rshb(addr, 0), rshb(data, 0), rshb(data, 8), rshb(data, 16), rshb(data, 24) };
+    if (HAL_I2C_Master_Transmit(&i2c, i2c_addr, tx, sizeof(tx), 100) == HAL_OK) {
+        words[addr >> 2] = data;
+        populated.set(addr >> 2);
+    }
+}
+
+void EEPROM::flush()
+{
+}
+
+
+#else
 
 // Bank layout (16 KB each, corresponding to sectors 2 and 3 on STM32F4xx):
 // Word 0: version number (incremented each time a new bank is started)
@@ -86,13 +152,6 @@ void EEPROM::write32(uint32_t addr, uint32_t data) {
     words[addr >> 2] = data;
     dirty |= uint64_t{1} << (addr >> 2);
 }
-
-void EEPROM::write8(uint32_t addr, uint8_t data) {
-    uint32_t shift = (addr & 3) << 3;
-    uint32_t oldv = words[addr >> 2];
-    write32(addr &~ 3, (oldv &~ (0xFF << shift)) | (uint32_t{data} << shift));
-}
-
 
 bool EEPROM::fetchBank(uint32_t *bank_data)
 {
@@ -253,3 +312,5 @@ void EEPROM::flush()
     }
 #endif
 }
+
+#endif
