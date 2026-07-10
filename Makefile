@@ -9,20 +9,24 @@ gdb: dro
 CXXFLAGS=-Iinclude -g -DDESKTOPSIM
 LDFLAGS=-lSDL -g
 
-OBJS = pcsrc/pcmain.o src/bmpfont.o src/gfx.o src/widgets.o src/screen.o src/calc.o src/eval.o src/buzzer.o src/touchscreen.o src/app.o src/encoder.o src/eeprom.o
+BSPOBJS = src/bsp/buzzer.o src/bsp/touchscreen.o src/bsp/encoder.o src/bsp/eeprom.o
 
-src/bmpfont.o: include/bmpfont.h include/gfx.h
-src/gfx.o: include/bmpfont.h include/gfx.h
-src/buzzer.o: include/buzzer.h
-src/touchscreen.o: include/touchscreen.h
+LIBOBJS = src/lib/gfx.o src/lib/widgets.o src/lib/screen.o src/lib/calc.o src/lib/eval.o
 
-src/widgets.o: include/bmpfont.h include/gfx.h include/widgets.h
-src/screen.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h
-src/eval.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
-src/calc.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
-src/eeprom.o: include/eeprom.h
-src/app.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h
+OBJS = pcsrc/pcmain.o src/dro/app.o ${BSPOBJS} ${LIBOBJS} src/bmpfont.o
 
+src/bsp/bmpfont.o: include/bmpfont.h include/gfx.h
+src/bsp/gfx.o: include/bmpfont.h include/gfx.h
+src/bsp/buzzer.o: include/buzzer.h
+src/bsp/touchscreen.o: include/touchscreen.h
+src/bsp/eeprom.o: include/eeprom.h
+
+src/lib/widgets.o: include/bmpfont.h include/gfx.h include/widgets.h
+src/lib/screen.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h
+src/lib/eval.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
+src/lib/calc.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
+
+src/dro/app.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h
 pcsrc/pcmain.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h
 
 src/bmpfont.cpp: src/fontconv.py

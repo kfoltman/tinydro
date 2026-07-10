@@ -1,5 +1,11 @@
 #pragma once
 
+#ifdef DESKTOPSIM
+
+#define EEPROM_IS_EMULATED
+
+#else
+
 #ifdef BOARD_V4
 #define MCU_IS_STM32H7
 #else
@@ -74,4 +80,6 @@
 // Keypad
 #ifdef BOARD_V4
 #define HAS_KEYPAD
+#endif
+
 #endif
