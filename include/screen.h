@@ -33,6 +33,26 @@ struct Coords
     }
 };
 
+class TestMenu: public VerticalMenu
+{
+public:
+    TestMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height)
+    : VerticalMenu(_pos_x, _pos_y, _width, _height) {}
+    const char *item(int index) override {
+        switch(index) {
+        case 0: return "Bolt circle";
+        case 1: return "Line/grid";
+        case 2: return "Foo";
+        case 3: return "Bar";
+        case 4: return "Baz";
+        default: return nullptr;
+        }
+    }
+    void activate(int index) override {
+        // Do nothing
+    }
+};
+
 class MainScreen: public Screen
 {
 public:
@@ -43,6 +63,7 @@ public:
     static constexpr int width_coord_display = 150;
     static constexpr int x_zero_button = x_coord_display + width_coord_display + margin;
     static constexpr int width_zero_button = 40;
+    static constexpr int x_right_part = x_zero_button + width_zero_button;
     static constexpr int height_coord_row = 60;
     static constexpr int y_x_axis = margin;
     static constexpr int y_y_axis = margin + height_coord_row + margin;
@@ -81,6 +102,9 @@ public:
     Button buttonFunc{x_button(3), y_buttons, width_button, height_buttons, "FUNC"};
     Button buttonSetup{x_button(4), y_buttons, width_button, height_buttons, "SETUP"};
     
+    TestMenu menu{x_right_part + 10, 50, LINE_WIDTH - x_right_part - 20, 150};
+    WidgetContainer menuScroll;
+
     void init();
     void loop();
     

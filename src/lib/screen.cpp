@@ -28,7 +28,11 @@ void MainScreen::init()
     
     //x_coord.z_index = 2;
     //debug_label.z_index = 1;
-    add(&debug_label);
+    //add(&debug_label);
+    menuScroll.add(&menu);
+    menuScroll.flags |= WF_PANY;
+    menuScroll.setBounds(0x7FFF, 100);
+    add(&menuScroll);
 
     add(&buttonInc);
     add(&buttonInch);

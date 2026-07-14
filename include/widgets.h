@@ -10,6 +10,8 @@
 #define WF_INVERSE (1 << 1)
 #define WF_ALIGN_RIGHT (1 << 4)
 #define WF_ALIGN_CENTRE (1 << 5)
+#define WF_PANX (1 << 6)
+#define WF_PANY (1 << 7)
 #define WF_HIDDEN (1 << 14)
 #define WF_UNCHANGED (1 << 15)
 
@@ -89,8 +91,8 @@ public:
     virtual const Font &font() const { return (state & 1) ? font_small_bold : font_small; }
     virtual uint16_t bg() const { return 0xFFFF; }
     virtual uint16_t fg() const { return 0; }
-    virtual bool onTouch(int x, int y);
-    virtual void prePaint();
+    bool onTouch(int x, int y) override;
+    void prePaint() override;
     virtual void drawText(int line, int sx, int ex, int istart, int iwidth, uint16_t bg, int shift);
 };
 
@@ -106,6 +108,27 @@ public:
     bool onTouch(int x, int y) override;
 };
 
+class VerticalMenu: public Widget
+{
+public:
+    int timer;
+    int active_item;
+    VerticalMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height)
+    : Widget{_pos_x, _pos_y, _width, _height, WF_BORDER}
+    , timer{0}
+    , active_item{-1}
+    {}
+    virtual const char *item(int index) = 0;
+    virtual void activate(int index) {}
+
+    void paint(int line, int sx, int ex) override;
+    virtual const Font &font() const { return font_lato; }
+    virtual uint16_t bg() const { return grayscale(208); }
+    virtual uint16_t fg() const { return grayscale(0); }
+    bool onTouch(int x, int y) override;
+    void prePaint() override;
+};
+
 class WidgetContainer: public Widget
 {
 public:
@@ -113,6 +136,7 @@ public:
     int drag_x, drag_y;
     
     WidgetContainer();
+    void setBounds(int16_t x_limit, int16_t y_limit);
     void add(Widget *_child);
     bool onTouch(int x, int y) override;
     void forEach(const std::function<bool(Widget *)> &visitor);

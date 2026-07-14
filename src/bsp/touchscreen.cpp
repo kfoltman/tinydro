@@ -27,6 +27,7 @@ TouchscreenEvent::Type Touchscreen::poll(TouchscreenEvent &event)
                     event.x = sdlEvent.button.x;
                     event.y = sdlEvent.button.y;
                     event.z = 10000;
+                    return event.type;
                 }
                 break;
             case SDL_MOUSEBUTTONUP:
@@ -36,6 +37,7 @@ TouchscreenEvent::Type Touchscreen::poll(TouchscreenEvent &event)
                     event.x = sdlEvent.button.x;
                     event.y = sdlEvent.button.y;
                     event.z = 0;
+                    return event.type;
                 }
                 break;
             case SDL_MOUSEMOTION:

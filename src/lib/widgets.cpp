@@ -201,6 +201,60 @@ bool ToggleButton::onTouch(int x, int y)
     return true;
 }
 
+void VerticalMenu::paint(int line, int sx, int ex)
+{
+    if (line == 0 || line >= height - 1) {
+        renderHorizLine(pos_x + sx, pos_x + ex, grayscale(160));
+        return;
+    }
+    line -= 1;
+    int fh = font().charHeight + 1;
+    const char *text = item(line / fh);
+    if (text) {
+        if (line % fh == fh - 1) {
+            renderHorizLine(pos_x + sx, pos_x + ex, grayscale(160));
+        } else {
+            renderHorizLine(pos_x + sx, std::min(pos_x + sx + 1, pos_x + ex), grayscale(160));
+            renderHorizLine(std::max(pos_x + sx, pos_x + ex - 1), pos_x + ex, grayscale(160));
+            TextGlyphs menuText(text, &font());
+            if (line / fh == active_item && timer > 0)
+                renderTextSpan(line % fh, pos_x + sx + 1, 0, pos_x + ex - 1, menuText, bg(), fg());
+            else
+                renderTextSpan(line % fh, pos_x + sx + 1, 0, pos_x + ex - 1, menuText, fg(), bg());
+        }
+    } else {
+        renderHorizLine(pos_x + sx, pos_x + ex, bg());
+    }
+}
+
+void VerticalMenu::prePaint()
+{
+    if (timer > 0) {
+        timer--;
+        if (!timer)
+            dirty();
+    }
+}
+
+bool VerticalMenu::onTouch(int x, int y)
+{
+    int line = y - pos_y;
+    int fh = font().charHeight + 1;
+    const char *text = item(line / fh);
+    if (text) {
+        TextGlyphs menuText(text, &font());
+        if (x >= pos_x && x < pos_x + menuText.width())
+        {
+            active_item = line / fh;
+            activate(active_item);
+            timer = 20;
+            dirty();
+            return true;
+        }
+    }
+    return false;
+}
+
 WidgetContainer::WidgetContainer()
 : Widget{0, 0, LINE_WIDTH, SCREEN_HEIGHT}
 , first_child{}
@@ -208,6 +262,28 @@ WidgetContainer::WidgetContainer()
 , drag_y{}
 {
     z_index = -1;
+}
+
+void WidgetContainer::setBounds(int16_t x_limit, int16_t y_limit)
+{
+    Widget **p = &first_child;
+    if (!*p)
+        return;
+    int16_t sx = (*p)->pos_x, sy = (*p)->pos_y;
+    int16_t ex = (*p)->pos_x + (*p)->width, ey = (*p)->pos_y + (*p)->height;
+    p = &(*p)->next;
+    while(*p) {
+        Widget *w = *p;
+        sx = std::min<int16_t>(sx, w->pos_x);
+        sy = std::min<int16_t>(sy, w->pos_y);
+        ex = std::max<int16_t>(ex, w->pos_x + w->width);
+        ey = std::max<int16_t>(ey, w->pos_y + w->height);
+        p = &(*p)->next;
+    }
+    pos_x = sx;
+    pos_y = sy;
+    width = std::min<int16_t>(x_limit, ex - sx);
+    height = std::min<int16_t>(y_limit, ey - sy);
 }
 
 void WidgetContainer::add(Widget *_child)
@@ -221,9 +297,12 @@ void WidgetContainer::add(Widget *_child)
 
 bool WidgetContainer::onTouch(int x, int y)
 {
-    drag_x = x;
-    drag_y = y;
-    return true;
+    if (flags & (WF_PANX | WF_PANY)) {
+        drag_x = x;
+        drag_y = y;
+        return true;
+    }
+    return false;
 }
 
 void WidgetContainer::forEach(const std::function<bool(Widget *)> &visitor)
@@ -256,7 +335,7 @@ void WidgetContainer::scroll(int dx, int dy)
 
 void WidgetContainer::onDrag(int x, int y)
 {
-    scroll(x - drag_x, y - drag_y);
+    scroll(flags & WF_PANX ? x - drag_x : 0, flags & WF_PANY ? y - drag_y : 0);
     drag_x = x;
     drag_y = y;
 }
