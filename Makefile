@@ -13,7 +13,9 @@ BSPOBJS = src/bsp/buzzer.o src/bsp/touchscreen.o src/bsp/encoder.o src/bsp/eepro
 
 LIBOBJS = src/lib/gfx.o src/lib/widgets.o src/lib/screen.o src/lib/calc.o src/lib/eval.o
 
-OBJS = pcsrc/pcmain.o src/dro/app.o ${BSPOBJS} ${LIBOBJS} src/bmpfont.o
+DROOBJS = src/dro/app.o src/dro/droscreens.o
+
+OBJS = pcsrc/pcmain.o ${DROOBJS} ${BSPOBJS} ${LIBOBJS} src/bmpfont.o
 
 src/bsp/bmpfont.o: include/bmpfont.h include/gfx.h
 src/bsp/gfx.o: include/bmpfont.h include/gfx.h
@@ -27,6 +29,7 @@ src/lib/eval.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen
 src/lib/calc.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
 
 src/dro/app.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h
+src/dro/droscreens.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h include/droscreens.h
 pcsrc/pcmain.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h
 
 src/bmpfont.cpp: src/fontconv.py

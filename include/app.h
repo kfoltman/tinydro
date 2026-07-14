@@ -2,6 +2,7 @@
 
 #include "eeprom.h"
 #include "screen.h"
+#include "droscreens.h"
 #include "calc.h"
 #include "touchscreen.h"
 #include "encoder.h"
