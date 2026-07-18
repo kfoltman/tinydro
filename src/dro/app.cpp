@@ -74,23 +74,19 @@ void App::updateEncoders()
 
 void App::loop()
 {
+    const uint16_t frame_time_setting = 20;
     uint16_t poll_ms = HAL_GetTick();
-    if (uint16_t(poll_ms - last_poll_ms) >= 10)
+    uint16_t frame_time = poll_ms - last_poll_ms;
+    if (frame_time < frame_time_setting)
     {
-        
-        TouchscreenEvent event;
-        touchscreen.poll(event);
-        onEvent(&event);
-        last_poll_ms = poll_ms;
-#if 0
-        static int cnt = 64;
-        if (cnt & 128)
-            screen->scroll(-4, 2);
-        else
-            screen->scroll(4, -2);
-        cnt++;
-#endif
+        HAL_Delay(frame_time_setting - frame_time);
+        return;
     }
+    last_poll_ms = poll_ms;
+
+    TouchscreenEvent event;
+    touchscreen.poll(event);
+    onEvent(&event);
     
     screen->loop();
     if (screen == &calibrationScreen && calibrationScreen.calibrationDone()) {
