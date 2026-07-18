@@ -11,7 +11,7 @@ LDFLAGS=-lSDL -g
 
 BSPOBJS = src/bsp/buzzer.o src/bsp/touchscreen.o src/bsp/encoder.o src/bsp/eeprom.o
 
-LIBOBJS = src/lib/gfx.o src/lib/widgets.o src/lib/screen.o src/lib/calc.o src/lib/eval.o
+LIBOBJS = src/lib/gfx.o src/lib/widgets.o src/lib/render.o src/lib/screen.o src/lib/calc.o src/lib/eval.o
 
 DROOBJS = src/dro/app.o src/dro/droscreens.o
 
@@ -23,6 +23,7 @@ src/bsp/buzzer.o: include/buzzer.h
 src/bsp/touchscreen.o: include/touchscreen.h
 src/bsp/eeprom.o: include/eeprom.h
 
+src/lib/render.o: include/bmpfont.h include/gfx.h include/widgets.h
 src/lib/widgets.o: include/bmpfont.h include/gfx.h include/widgets.h
 src/lib/screen.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h
 src/lib/eval.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
