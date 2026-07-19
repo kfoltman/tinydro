@@ -19,6 +19,7 @@ public:
 public:
     WS2812B() : hdma_tim5_ch2{}, colours{} {
     }
+    static constexpr uint32_t rgb(uint8_t r, uint8_t g, uint8_t b) { return g * 65536U + r * 256U + b; }
     void init();
     void update();
 };

@@ -6,6 +6,12 @@
 #include "calc.h"
 #include "touchscreen.h"
 #include "encoder.h"
+#ifdef HAS_WS2812B
+#include "ws2812b.h"
+#endif
+#ifdef HAS_KEYPAD
+#include "i2c_keypad.h"
+#endif
 
 class App
 {
@@ -26,6 +32,12 @@ public:
     EEPROM eeprom;
     Touchscreen touchscreen;
     Encoder encX{4}, encY{3}, encZ{2};
+#ifdef HAS_WS2812B
+    WS2812B rgbled;
+#endif
+#ifdef HAS_KEYPAD
+    I2C_Keypad keypad;
+#endif
 
     void init();
     void loop();

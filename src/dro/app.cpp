@@ -14,6 +14,12 @@ void App::init()
     encX.init();
     encY.init();
     encZ.init();
+#ifdef HAS_WS2812B
+    rgbled.init();
+#endif
+#ifdef HAS_KEYPAD
+    keypad.init();
+#endif
 
     mainScreen.init();
     calcScreen.init();
@@ -84,6 +90,18 @@ void App::loop()
     }
     last_poll_ms = poll_ms;
 
+#ifdef HAS_WS2812B
+    constexpr uint32_t red = WS2812B::rgb(255, 0, 0);
+    constexpr uint32_t black = WS2812B::rgb(0, 0, 0);
+    rgbled.colours[0] = cur_coord == 0 && screen == &calcScreen ? red : black;
+    rgbled.colours[1] = cur_coord == 1 && screen == &calcScreen ? red : black;
+    rgbled.colours[2] = cur_coord == 2 && screen == &calcScreen ? red : black;
+    rgbled.colours[3] = black;
+    rgbled.update();
+#endif
+#ifdef HAS_KEYPAD
+    keypad.poll();
+#endif
     TouchscreenEvent event;
     touchscreen.poll(event);
     onEvent(&event);

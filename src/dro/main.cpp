@@ -13,12 +13,6 @@
 ILI9488LCD lcd;
 App app;
 USB_ACM serial;
-#ifdef HAS_WS2812B
-WS2812B rgbled;
-#endif
-#ifdef HAS_KEYPAD
-I2C_Keypad keypad;
-#endif
 
 #define LED1 Pin{GPIOC, 4}
 #define LED2 Pin{GPIOC, 5}
@@ -254,13 +248,7 @@ void setup()
     LED1.reset();
     serial.init();
     lcd.init();
-#ifdef HAS_WS2812B
-    rgbled.init();
-#endif
     app.init();
-#ifdef HAS_KEYPAD
-    keypad.init();
-#endif
 }
 
 int resetTimer = 200;
@@ -268,7 +256,6 @@ int resetTimer = 200;
 void loop()
 {
     globalTime++;
-#ifdef BOARD_V4
     if (globalTime & 128) {
         LED1.reset();
         LED2.set();
@@ -276,26 +263,6 @@ void loop()
         LED1.set();
         LED2.reset();
     }
-    if ((globalTime & 7) == 0) {
-        auto wave = [](int value) -> uint8_t {
-            uint8_t tri = (value & 255) ^ (value & 256 ? 255 : 0);
-            return uint16_t(tri) * tri >> 8;
-        };
-        keypad.poll();
-        if (keypad.keys & 1) {
-            rgbled.colours[0] = wave(globalTime);
-            rgbled.colours[1] = wave(globalTime + 85) << 8;
-            rgbled.colours[2] = wave(globalTime + 170) << 16;
-            rgbled.colours[3] = rgbled.colours[0] | rgbled.colours[1] | rgbled.colours[2];
-        } else {
-            rgbled.colours[0] = 0x4;
-            rgbled.colours[1] = 0x400;
-            rgbled.colours[2] = 0x40000;
-            rgbled.colours[3] = 0x40404;
-        }
-        rgbled.update();
-    }
-#endif
     if (serial.isActive()) {
         if (serial.dtr()) {
             resetTimer = 0;
@@ -313,6 +280,7 @@ void loop()
     Display display(lcd);
     app.render(display);
     app.loop();
+#if 0
     if (!(globalTime & 15) && serial.isActive())
     {
         char buf[128];
@@ -320,7 +288,6 @@ void loop()
         serial.write((const uint8_t *)buf, strlen(buf));
         serial.flush();
     }
-#if 0
     if (serial.isActive()) {
         while(serial.getRxCount() && serial.getTxSpace()) {
             uint8_t buf[256];
