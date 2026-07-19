@@ -41,8 +41,11 @@ void App::init()
     mainScreen.y_coord.action = [this]() { editCoord(1); };
     mainScreen.z_coord.action = [this]() { editCoord(2); };
     mainScreen.buttonFunc.action = [this]() {
-        app.eeprom.write32(0, app.eeprom.read32(0) + 1);
-        app.eeprom.flush();
+        mainScreen.menu.flags ^= WF_HIDDEN;
+        mainScreen.menu.dirty();
+        screen->dirty();
+        // app.eeprom.write32(0, app.eeprom.read32(0) + 1);
+        // app.eeprom.flush();
     };
     mainScreen.buttonSetup.action = [this]() {
         screen = &calibrationScreen;
@@ -105,7 +108,8 @@ void App::loop()
     TouchscreenEvent event;
     touchscreen.poll(event);
     onEvent(&event);
-    
+
+    screen->onTick();
     screen->loop();
     if (screen == &calibrationScreen && calibrationScreen.calibrationDone()) {
         screen = &mainScreen;

@@ -33,6 +33,7 @@ public:
     
     virtual void dirty() { flags &= ~WF_UNCHANGED; }
     virtual void prePaint() {}
+    virtual void onTick() {}
     virtual void paint(int line, int sx, int ex) {}
     virtual bool onTouch(int x, int y);
     virtual void onRelease() {}
@@ -92,7 +93,7 @@ public:
     virtual uint16_t bg() const { return 0xFFFF; }
     virtual uint16_t fg() const { return 0; }
     bool onTouch(int x, int y) override;
-    void prePaint() override;
+    void onTick() override;
     virtual void drawText(int line, int sx, int ex, int istart, int iwidth, uint16_t bg, int shift);
 };
 
@@ -134,7 +135,7 @@ public:
     bool onTouch(int x, int y) override;
     void onDrag(int x, int y) override;
     void onRelease() { drag_y = -1; }
-    void prePaint() override;
+    void onTick() override;
 };
 
 class WidgetContainer: public Widget
@@ -152,6 +153,7 @@ public:
     bool isContainer() const override { return true; }
     void onDrag(int x, int y) override;
     void paint(int line, int sx, int ex) override;
+    void onTick() override;
 };
 
 struct PixelSpan

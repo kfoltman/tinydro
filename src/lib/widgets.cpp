@@ -143,7 +143,7 @@ void Button::drawText(int line, int sx, int ex, int istart, int iwidth, uint16_t
     }
 }
 
-void Button::prePaint()
+void Button::onTick()
 {
     if (state & 1) {
         if (timer > 0)
@@ -236,7 +236,7 @@ void VerticalMenu::paint(int line, int sx, int ex)
     }
 }
 
-void VerticalMenu::prePaint()
+void VerticalMenu::onTick()
 {
     if (timer > 0) {
         timer--;
@@ -339,6 +339,13 @@ void WidgetContainer::forEach(const std::function<bool(Widget *)> &visitor)
         } else {
             visitor(child);
         }
+    }
+}
+
+void WidgetContainer::onTick()
+{
+    for (Widget *child = first_child; child; child = child->next) {
+        child->onTick();
     }
 }
 
