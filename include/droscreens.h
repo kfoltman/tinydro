@@ -34,16 +34,8 @@ class TestMenu: public VerticalMenu
 public:
     TestMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height)
     : VerticalMenu(_pos_x, _pos_y, _width, _height) {}
-    const char *item(int index) override {
-        switch(index) {
-        case 0: return "Bolt circle";
-        case 1: return "Line/grid";
-        case 2: return "Foo";
-        case 3: return "Bar";
-        case 4: return "Baz";
-        default: return nullptr;
-        }
-    }
+    const char *item(int index) const override;
+    int itemCount() const override;
     void activate(int index) override {
         // Do nothing
     }
@@ -99,7 +91,6 @@ public:
     Button buttonSetup{x_button(4), y_buttons, width_button, height_buttons, "SETUP"};
     
     TestMenu menu{x_right_part + 10, 50, LINE_WIDTH - x_right_part - 20, 150};
-    WidgetContainer menuScroll;
 
     void init();
     void loop();

@@ -6,6 +6,21 @@
 #include <stdio.h>
 #include <string.h>
 
+const char *TestMenu::item(int index) const {
+    switch(index) {
+    case 0: return "Bolt circle";
+    case 1: return "Line/grid";
+    case 2: return "Foo";
+    case 3: return "Bar";
+    case 4: return "Baz";
+    default: return nullptr;
+    }
+}
+
+int TestMenu::itemCount() const {
+    return 5;
+}
+
 void MainScreen::init()
 {
 #if 0
@@ -30,10 +45,7 @@ void MainScreen::init()
     //x_coord.z_index = 2;
     //debug_label.z_index = 1;
     //add(&debug_label);
-    menuScroll.add(&menu);
-    menuScroll.flags |= WF_PANY;
-    menuScroll.setBounds(0x7FFF, 100);
-    add(&menuScroll);
+    add(&menu);
 
     add(&buttonInc);
     add(&buttonInch);

@@ -203,12 +203,18 @@ bool ToggleButton::onTouch(int x, int y)
 
 void VerticalMenu::paint(int line, int sx, int ex)
 {
-    if (line == 0 || line >= height - 1) {
+    line += scroll_y;
+    int fh = font().charHeight + 1;
+    int menuHeight = itemCount() * fh + 2;
+    if (line == 0 || line == menuHeight - 1) {
         renderHorizLine(pos_x + sx, pos_x + ex, grayscale(160));
         return;
     }
+    if (line >= menuHeight) {
+        renderHorizLine(pos_x + sx, pos_x + ex, bg());
+        return;
+    }
     line -= 1;
-    int fh = font().charHeight + 1;
     const char *text = item(line / fh);
     if (text) {
         if (line % fh == fh - 1) {
@@ -241,7 +247,7 @@ void VerticalMenu::prePaint()
 
 bool VerticalMenu::onTouch(int x, int y)
 {
-    int line = y - pos_y;
+    int line = y + scroll_y - pos_y - 1;
     int fh = font().charHeight + 1;
     const char *text = item(line / fh);
     if (text) {
@@ -252,10 +258,24 @@ bool VerticalMenu::onTouch(int x, int y)
             activate(active_item);
             timer = 20;
             dirty();
+            drag_y = -1;
             return true;
         }
     }
-    return false;
+    drag_y = y;
+    return true;
+}
+
+void VerticalMenu::onDrag(int x, int y)
+{
+    if (drag_y == -1)
+        return;
+    int fh = font().charHeight + 1;
+    int menuHeight = itemCount() * fh + 2;
+    scroll_y -= (y - drag_y);
+    scroll_y = std::max(0, std::min(scroll_y, std::max(0, menuHeight - height)));
+    drag_y = y;
+    dirty();
 }
 
 WidgetContainer::WidgetContainer()

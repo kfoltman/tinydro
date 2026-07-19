@@ -29,9 +29,9 @@ src/lib/screen.o: include/bmpfont.h include/gfx.h include/widgets.h include/scre
 src/lib/eval.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
 src/lib/calc.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eval.h
 
-src/dro/app.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h
+src/dro/app.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h include/droscreens.h
 src/dro/droscreens.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/eeprom.h include/droscreens.h
-pcsrc/pcmain.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h
+pcsrc/pcmain.o: include/bmpfont.h include/gfx.h include/widgets.h include/screen.h include/droscreens.h
 
 src/bmpfont.cpp: src/fontconv.py
 	(cd src; python3 fontconv.py)

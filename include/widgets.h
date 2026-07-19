@@ -113,12 +113,18 @@ class VerticalMenu: public Widget
 public:
     int timer;
     int active_item;
+    int drag_y;
+    int scroll_y;
+
     VerticalMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height)
     : Widget{_pos_x, _pos_y, _width, _height, WF_BORDER}
     , timer{0}
     , active_item{-1}
+    , drag_y{-1}
+    , scroll_y{0}
     {}
-    virtual const char *item(int index) = 0;
+    virtual const char *item(int index) const = 0;
+    virtual int itemCount() const = 0;
     virtual void activate(int index) {}
 
     void paint(int line, int sx, int ex) override;
@@ -126,6 +132,8 @@ public:
     virtual uint16_t bg() const { return grayscale(208); }
     virtual uint16_t fg() const { return grayscale(0); }
     bool onTouch(int x, int y) override;
+    void onDrag(int x, int y) override;
+    void onRelease() { drag_y = -1; }
     void prePaint() override;
 };
 
