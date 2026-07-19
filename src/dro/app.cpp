@@ -103,7 +103,10 @@ void App::loop()
     rgbled.update();
 #endif
 #ifdef HAS_KEYPAD
-    keypad.poll();
+    int key = keypad.pollFull();
+    if (key != -1) {
+        onKey(key);
+    }
 #endif
     TouchscreenEvent event;
     touchscreen.poll(event);
@@ -115,6 +118,18 @@ void App::loop()
         screen = &mainScreen;
         screen->dirty();
         return;
+    }
+}
+
+void App::onKey(int key)
+{
+    switch(key) {
+        case 18: editCoord(0); break;
+        case 12: editCoord(1); break;
+        case 6: editCoord(2); break;
+        case 0: screen = &mainScreen; screen->dirty(); break;
+        default:
+            break;
     }
 }
 

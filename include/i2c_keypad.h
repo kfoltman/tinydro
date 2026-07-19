@@ -10,8 +10,11 @@ private:
 public:
     uint32_t keys{0};
     uint8_t row{0};
+    int8_t lastKey{-1};
+    int8_t keyTimer{0};
 
     void init();
     void poll();
+    int pollFull();
 };
 

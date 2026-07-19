@@ -20,6 +20,9 @@ void I2C_Keypad::init()
     i2c.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
     
     HAL_I2C_Init(&i2c);
+
+    lastKey = -1;
+    keyTimer = 0;
 }
 
 void I2C_Keypad::poll()
@@ -42,6 +45,34 @@ void I2C_Keypad::poll()
             row = (row + 1) & 3;
         }
     }
+}
+
+int I2C_Keypad::pollFull()
+{
+    for (int i = 0; i < 4; ++i)
+        poll();
+
+    int key = -1;
+    for (int i = 0; i < 24; ++i) {
+        if (keys & (1 << i)) {
+            key = i;
+            break;
+        }
+    }
+    if (keyTimer > 0) {
+        keyTimer--;
+        return -1;
+    }
+    if (key == -1) {
+        lastKey = -1;
+        return -1;
+    }
+    if (key == lastKey) {
+        keyTimer = 5;
+        return key | 0x40;
+    }
+    keyTimer = 5;
+    return key;
 }
 
 #endif

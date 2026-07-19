@@ -42,6 +42,7 @@ public:
     void init();
     void loop();
     void initThermo();
+    void onKey(int key);
     void onEvent(const TouchscreenEvent *event);
     void onSerialChar(char ch);
     void render(Display &display);
