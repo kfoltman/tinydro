@@ -20,6 +20,9 @@ void App::init()
 #ifdef HAS_KEYPAD
     keypad.init();
 #endif
+#ifdef HAS_RTC
+    rtc.init();
+#endif
 
     mainScreen.init();
     calcScreen.init();
@@ -108,6 +111,12 @@ void App::loop()
         onKey(key);
     }
 #endif
+#ifdef HAS_RTC
+    RealTimeClock::Time t = rtc.getTime();
+    char buf[64];
+    sprintf(buf, "%02d:%02d:%02d.%03d", (int)t.hour, (int)t.minute, (int)t.second, (int)t.subsecond);
+    mainScreen.debug_label.setText(buf);
+#endif
     TouchscreenEvent event;
     touchscreen.poll(event);
     onEvent(&event);
@@ -128,6 +137,10 @@ void App::onKey(int key)
         case 12: editCoord(1); break;
         case 6: editCoord(2); break;
         case 0: screen = &mainScreen; screen->dirty(); break;
+        
+        case 19: { RealTimeClock::Time t = rtc.getTime(); t.hour = (t.hour + 1) % 24; rtc.setTime(t); break; }
+        case 13: { RealTimeClock::Time t = rtc.getTime(); t.minute = (t.minute + 1) % 60; rtc.setTime(t); break; }
+        case 7: { RealTimeClock::Time t = rtc.getTime(); t.second = (t.second + 1) % 60; rtc.setTime(t); break; }
         default:
             break;
     }

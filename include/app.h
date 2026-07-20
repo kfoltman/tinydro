@@ -12,6 +12,9 @@
 #ifdef HAS_KEYPAD
 #include "i2c_keypad.h"
 #endif
+#ifdef HAS_RTC
+#include "rtc.h"
+#endif
 
 class App
 {
@@ -37,6 +40,9 @@ public:
 #endif
 #ifdef HAS_KEYPAD
     I2C_Keypad keypad;
+#endif
+#ifdef HAS_RTC
+    RealTimeClock rtc;
 #endif
 
     void init();

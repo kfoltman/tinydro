@@ -82,4 +82,9 @@
 #define HAS_KEYPAD
 #endif
 
+// RTC
+#ifdef BOARD_V4
+#define HAS_RTC
+#endif
+
 #endif

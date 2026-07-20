@@ -43,8 +43,8 @@ void MainScreen::init()
     add(&z_zero);
     
     //x_coord.z_index = 2;
-    //debug_label.z_index = 1;
-    //add(&debug_label);
+    debug_label.z_index = -1;
+    add(&debug_label);
     add(&menu);
     menu.flags |= WF_HIDDEN;
 

@@ -160,11 +160,29 @@ void InitClocks()
         Error_Handler();
     }
 
+    memset(&RCC_OscInitStruct, 0, sizeof(RCC_OscInitStruct));
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE | RCC_OSCILLATORTYPE_LSI;
+    RCC_OscInitStruct.LSIState = RCC_LSI_ON;
+    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
     RCC_PeriphCLKInitTypeDef RCC_PeriphInitStruct = {0};
-    RCC_PeriphInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
+    RCC_PeriphInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB | RCC_PERIPHCLK_RTC;
     RCC_PeriphInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_PLL;
     //RCC_PeriphInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
+    RCC_PeriphInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
     if (HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    memset(&RCC_OscInitStruct, 0, sizeof(RCC_OscInitStruct));
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI;
+    RCC_OscInitStruct.LSIState = RCC_LSI_OFF;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
     {
         Error_Handler();
     }
@@ -224,6 +242,9 @@ void InitClocks()
     // USB
     HAL_PWREx_EnableUSBVoltageDetector();
     __HAL_RCC_USB2_OTG_FS_CLK_ENABLE();
+    // RTC
+    __HAL_RCC_RTC_CLK_ENABLE();
+    __HAL_RCC_RTC_ENABLE();
 }
 #endif
 
@@ -273,10 +294,12 @@ void loop()
         // app.mainScreen.debug_label.setText("No serial");
         resetTimer = 200;
     }
+#if 0
     char buf[64];
     static int cnt = 0;
     sprintf(buf, "Var=%d cnt=%d\n", (int)app.eeprom.read32(0), cnt++);
     app.mainScreen.debug_label.setText(buf);
+#endif
     Display display(lcd);
     app.render(display);
     app.loop();

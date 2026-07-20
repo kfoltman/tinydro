@@ -72,6 +72,7 @@ int I2C_Keypad::pollFull()
         return key | 0x40;
     }
     keyTimer = 5;
+    lastKey = key;
     return key;
 }
 
