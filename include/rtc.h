@@ -21,6 +21,7 @@ public:
         : year(_y), month(_mo), day(_d)
         , hour{_h}, minute{_mi}, second{_s}, subsecond{_ss} {}
     };
+    int init_error;
     void init();
 
     Time getTime();

@@ -132,18 +132,22 @@ void App::loop()
 
 void App::onKey(int key)
 {
+#ifdef HAS_KEYPAD
     switch(key) {
         case 18: editCoord(0); break;
         case 12: editCoord(1); break;
         case 6: editCoord(2); break;
         case 0: screen = &mainScreen; screen->dirty(); break;
-        
+
+#ifdef HAS_RTC
         case 19: { RealTimeClock::Time t = rtc.getTime(); t.hour = (t.hour + 1) % 24; rtc.setTime(t); break; }
         case 13: { RealTimeClock::Time t = rtc.getTime(); t.minute = (t.minute + 1) % 60; rtc.setTime(t); break; }
         case 7: { RealTimeClock::Time t = rtc.getTime(); t.second = (t.second + 1) % 60; rtc.setTime(t); break; }
+#endif
         default:
             break;
     }
+#endif
 }
 
 void App::onEvent(const TouchscreenEvent *event)

@@ -1,7 +1,7 @@
 #include "rtc.h"
 #include <string.h>
 
-int init_error = 0;
+#ifdef HAS_RTC
 
 void RealTimeClock::init()
 {
@@ -49,3 +49,5 @@ void RealTimeClock::setTime(const RealTimeClock::Time &timeval)
     RTC_DateTypeDef date;
     HAL_RTC_GetDate(&handle, &date, RTC_FORMAT_BIN);
 }
+
+#endif
