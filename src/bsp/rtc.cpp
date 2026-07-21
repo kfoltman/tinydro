@@ -7,8 +7,8 @@ void RealTimeClock::init()
 {
     memset(&handle, 0, sizeof(handle));
     handle.Instance = RTC;
-    handle.Init.AsynchPrediv = 127; // 128
-    handle.Init.SynchPrediv = 256;
+    handle.Init.AsynchPrediv = 127;
+    handle.Init.SynchPrediv = 255;
     handle.Init.HourFormat = RTC_HOURFORMAT_24;
     init_error = HAL_RTC_Init(&handle);
 }
