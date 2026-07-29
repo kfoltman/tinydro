@@ -29,7 +29,7 @@ RealTimeClock::Time RealTimeClock::getTime()
 
 void RealTimeClock::setDate(const RealTimeClock::Time &time)
 {
-    RTC_DateTypeDef date;
+    RTC_DateTypeDef date{};
     date.Year = time.year;
     date.Month = time.month;
     date.Date = time.day;
@@ -38,7 +38,7 @@ void RealTimeClock::setDate(const RealTimeClock::Time &time)
 
 void RealTimeClock::setTime(const RealTimeClock::Time &timeval)
 {
-    RTC_TimeTypeDef time;
+    RTC_TimeTypeDef time{};
     HAL_RTC_GetTime(&handle, &time, RTC_FORMAT_BIN);
     time.Hours = timeval.hour;
     time.Minutes = timeval.minute;
