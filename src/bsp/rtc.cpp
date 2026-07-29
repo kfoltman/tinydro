@@ -15,14 +15,14 @@ void RealTimeClock::init()
 
 RealTimeClock::Time RealTimeClock::getTime()
 {
-    RTC_TimeTypeDef time;
-    RTC_DateTypeDef date;
+    RTC_TimeTypeDef time{};
+    RTC_DateTypeDef date{};
     if (init_error) {
         return Time{};
     }
     if (HAL_RTC_GetTime(&handle, &time, RTC_FORMAT_BIN) == HAL_OK) {
         HAL_RTC_GetDate(&handle, &date, RTC_FORMAT_BIN);
-        return Time{date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds, uint16_t(time.SubSeconds * 1000U / time.SecondFraction)};
+        return Time{date.Year, date.Month, date.Date, time.Hours, time.Minutes, time.Seconds, uint16_t(time.SubSeconds * 1000U / (time.SecondFraction + 1U))};
     }
     return Time{};
 }
@@ -43,10 +43,10 @@ void RealTimeClock::setTime(const RealTimeClock::Time &timeval)
     time.Hours = timeval.hour;
     time.Minutes = timeval.minute;
     time.Seconds = timeval.second;
-    time.SubSeconds = uint32_t((timeval.subsecond * time.SecondFraction + 500U) / 1000U);
+    time.SubSeconds = uint32_t((timeval.subsecond * (time.SecondFraction + 1U) + 500U) / 1000U);
     HAL_RTC_SetTime(&handle, &time, RTC_FORMAT_BIN);
     // GetTime latches the time until GetDate is called
-    RTC_DateTypeDef date;
+    RTC_DateTypeDef date{};
     HAL_RTC_GetDate(&handle, &date, RTC_FORMAT_BIN);
 }
 
