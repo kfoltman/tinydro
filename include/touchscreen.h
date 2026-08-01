@@ -36,7 +36,7 @@ public:
 
     DMA_HandleTypeDef DMATx, DMARx;
     SPI_HandleTypeDef SPI;
-    uint8_t txvalues[16], rxvalues[16];
+    uint8_t txvalues[20]{}, rxvalues[20]{};
     TouchscreenRawInput scanbuf[NSAMPLES], avg;
     volatile bool ready : 1;
     volatile bool in_progress : 1;

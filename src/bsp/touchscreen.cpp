@@ -154,9 +154,13 @@ void Touchscreen::init()
     for(uint8_t &value: rxvalues)
         value = 0;
     txvalues[0] = ctl(1);
+    txvalues[2] = ctl(1);
     txvalues[4] = ctl(5);
+    txvalues[6] = ctl(5);
     txvalues[8] = ctl(3);
+    txvalues[10] = ctl(3);
     txvalues[12] = ctl(4);
+    txvalues[14] = ctl(4);
     in_progress = false;
     cycle = 0;
     pressed = false;
@@ -176,10 +180,10 @@ void Touchscreen::onSystick()
 void Touchscreen::onDataReady()
 {
     TOUCH_CSN.set();
-    int x = (rxvalues[1] * 256 + rxvalues[2]) >> 3;
-    int y = (rxvalues[5] * 256 + rxvalues[6]) >> 3;
-    int z1 = (rxvalues[9] * 256 + rxvalues[10]) >> 3;
-    int z2 = (rxvalues[13] * 256 + rxvalues[14]) >> 3;
+    int x = (rxvalues[3] * 256 + rxvalues[4]) >> 3;
+    int y = (rxvalues[7] * 256 + rxvalues[8]) >> 3;
+    int z1 = (rxvalues[11] * 256 + rxvalues[12]) >> 3;
+    int z2 = (rxvalues[15] * 256 + rxvalues[16]) >> 3;
     scanbuf[cycle].x = x;
     scanbuf[cycle].y = y;
     scanbuf[cycle].z1 = z1;
