@@ -43,13 +43,6 @@ void App::init()
     mainScreen.x_coord.action = [this]() { editCoord(0); };
     mainScreen.y_coord.action = [this]() { editCoord(1); };
     mainScreen.z_coord.action = [this]() { editCoord(2); };
-    mainScreen.buttonFunc.action = [this]() {
-        mainScreen.menu.flags ^= WF_HIDDEN;
-        mainScreen.menu.dirty();
-        screen->dirty();
-        // app.eeprom.write32(0, app.eeprom.read32(0) + 1);
-        // app.eeprom.flush();
-    };
     mainScreen.buttonSetup.action = [this]() {
         screen = &calibrationScreen;
         screen->dirty();

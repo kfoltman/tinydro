@@ -138,6 +138,32 @@ public:
     void onTick() override;
 };
 
+template<typename Owner>
+struct SimpleMenuItem
+{
+    const char *name;
+    std::function<void(Owner *)> activate;
+};
+
+template<typename Owner>
+class SimpleMenu: public VerticalMenu
+{
+protected:
+    const SimpleMenuItem<Owner> *items;
+    int n_items;
+    Owner *owner;
+public:
+    SimpleMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, const SimpleMenuItem<Owner> *_items, int _n_items, Owner *_owner)
+    : VerticalMenu(_pos_x, _pos_y, _width, _height), items{_items}, n_items{_n_items}, owner(_owner) {}
+    const char *item(int index) const override { return (index >= 0 && index < n_items) ? items[index].name : nullptr; }
+    int itemCount() const override { return n_items; }
+    void activate(int index) override {
+        if (items[index].activate) {
+            items[index].activate(owner);
+        }
+    }
+};
+
 class WidgetContainer: public Widget
 {
 public:

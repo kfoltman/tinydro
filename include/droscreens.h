@@ -29,18 +29,6 @@ struct Coords
     }
 };
 
-class TestMenu: public VerticalMenu
-{
-public:
-    TestMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height)
-    : VerticalMenu(_pos_x, _pos_y, _width, _height) {}
-    const char *item(int index) const override;
-    int itemCount() const override;
-    void activate(int index) override {
-        // Do nothing
-    }
-};
-
 class MainScreen: public Screen
 {
 public:
@@ -88,20 +76,30 @@ public:
     ToggleButton buttonInch{x_button(1), y_buttons, width_button, height_buttons, "mm", "inch"};
     Button buttonMem{x_button(2), y_buttons, width_button, height_buttons, "MEM"};
     Button buttonFunc{x_button(3), y_buttons, width_button, height_buttons, "FUNC"};
-    Button buttonSetup{x_button(4), y_buttons, width_button, height_buttons, "SETUP"};
+    Button buttonSetup{x_button(4), y_buttons, width_button, height_buttons, "CONF"};
     
-    TestMenu menu{x_right_part + 10, 50, LINE_WIDTH - x_right_part - 20, 150};
+    static const SimpleMenuItem<MainScreen> menuFunctions[];
+    static const int numFunctions;
+
+    SimpleMenu<MainScreen> menu{x_right_part + 10, 2, LINE_WIDTH - x_right_part - 10, y_buttons - 4, menuFunctions, numFunctions, this};
 
     void init();
     void loop();
-    
+
     void formatCoords();
     void formatCoord(Label &display, int value);
 
     int fromDisplay(double value) const;
     double toDisplay(int micrometers) const;
-    
+
     double getCoord(int coord) const;
     void setCoord(int coord, double value);
+
+    void hideMenu();
+
+    // Functions - not implemented yet
+    void boltCircle() {}
+    void holeRow() {}
+    void arc() {}
 };
 

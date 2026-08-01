@@ -240,8 +240,10 @@ void VerticalMenu::onTick()
 {
     if (timer > 0) {
         timer--;
-        if (!timer)
+        if (!timer) {
+            activate(active_item);
             dirty();
+        }
     }
 }
 
@@ -255,8 +257,7 @@ bool VerticalMenu::onTouch(int x, int y)
         if (x >= pos_x && x < pos_x + menuText.width())
         {
             active_item = line / fh;
-            activate(active_item);
-            timer = 20;
+            timer = 10;
             dirty();
             drag_y = -1;
             return true;

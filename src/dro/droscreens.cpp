@@ -6,20 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
-const char *TestMenu::item(int index) const {
-    switch(index) {
-    case 0: return "Bolt circle";
-    case 1: return "Line/grid";
-    case 2: return "Foo";
-    case 3: return "Bar";
-    case 4: return "Baz";
-    default: return nullptr;
-    }
-}
-
-int TestMenu::itemCount() const {
-    return 5;
-}
+const SimpleMenuItem<MainScreen> MainScreen::menuFunctions[] = {
+        { "Bolt circle (PCD)", [](MainScreen *screen) { screen->hideMenu(); screen->boltCircle(); } },
+        { "Line (PLD)", [](MainScreen *screen) { screen->hideMenu(); screen->holeRow(); } },
+        { "Arc", [](MainScreen *screen) { screen->hideMenu(); screen->arc(); }},
+};
+const int MainScreen::numFunctions = sizeof(menuFunctions) / sizeof(menuFunctions[0]);
 
 void MainScreen::init()
 {
@@ -29,7 +21,9 @@ void MainScreen::init()
     pos_y = SCREEN_HEIGHT / 4;
     height = SCREEN_HEIGHT / 2;
 #endif
+#if 0
     flags |= WF_BORDER;
+#endif
     add(&x_label);
     add(&x_coord);
     add(&x_zero);
@@ -58,10 +52,16 @@ void MainScreen::init()
     x_coord.setFont(&font_lato);
     y_coord.setFont(&font_lato);
     z_coord.setFont(&font_lato);
-    
+
     x_zero.action = [this]() { setCoord(0, 0); };
     y_zero.action = [this]() { setCoord(1, 0); };
     z_zero.action = [this]() { setCoord(2, 0); };
+
+    buttonFunc.action = [this]() {
+        menu.flags ^= WF_HIDDEN;
+        menu.dirty();
+        dirty();
+    };
 }
 
 void MainScreen::loop()
@@ -135,3 +135,9 @@ void MainScreen::setCoord(int coord, double value)
     }
 }
 
+void MainScreen::hideMenu()
+{
+    menu.flags |= WF_HIDDEN;
+    menu.dirty();
+    dirty();
+}
