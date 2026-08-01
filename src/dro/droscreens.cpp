@@ -9,7 +9,7 @@
 const SimpleMenuItem<MainScreen> MainScreen::menuFunctions[] = {
         { "Bolt circle (PCD)", [](MainScreen *screen) { screen->hideMenu(); screen->boltCircle(); } },
         { "Line (PLD)", [](MainScreen *screen) { screen->hideMenu(); screen->holeRow(); } },
-        { "Arc", [](MainScreen *screen) { screen->hideMenu(); screen->arc(); }},
+        { "Arc", [](MainScreen *screen) { screen->hideMenu(); screen->arc(); }, [](MainScreen *screen, char *buf, unsigned size) { snprintf(buf, size, "Value"); return true; } },
 };
 const int MainScreen::numFunctions = sizeof(menuFunctions) / sizeof(menuFunctions[0]);
 

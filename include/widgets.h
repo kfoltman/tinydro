@@ -111,6 +111,8 @@ public:
 
 class VerticalMenu: public Widget
 {
+protected:
+    static constexpr int animTime = 10;
 public:
     int timer;
     int active_item;
@@ -125,13 +127,16 @@ public:
     , scroll_y{0}
     {}
     virtual const char *item(int index) const = 0;
+    virtual bool value(int index, char *buffer, unsigned int size) const = 0;
     virtual int itemCount() const = 0;
     virtual void activate(int index) {}
 
     void paint(int line, int sx, int ex) override;
     virtual const Font &font() const { return font_lato; }
+    virtual const Font &fontValue() const { return font_small_bold; }
     virtual uint16_t bg() const { return grayscale(208); }
     virtual uint16_t fg() const { return grayscale(0); }
+    virtual uint16_t fgValue() const { return (flags & WF_INVERSE) ? grayscale(192) : grayscale(64); }
     bool onTouch(int x, int y) override;
     void onDrag(int x, int y) override;
     void onRelease() { drag_y = -1; }
@@ -143,6 +148,7 @@ struct SimpleMenuItem
 {
     const char *name;
     std::function<void(Owner *)> activate;
+    std::function<bool(Owner *, char *buffer, unsigned int size)> value;
 };
 
 template<typename Owner>
@@ -152,10 +158,12 @@ protected:
     const SimpleMenuItem<Owner> *items;
     int n_items;
     Owner *owner;
+    bool valid(int index) const { return (index >= 0 && index < n_items); }
 public:
     SimpleMenu(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, const SimpleMenuItem<Owner> *_items, int _n_items, Owner *_owner)
     : VerticalMenu(_pos_x, _pos_y, _width, _height), items{_items}, n_items{_n_items}, owner(_owner) {}
-    const char *item(int index) const override { return (index >= 0 && index < n_items) ? items[index].name : nullptr; }
+    const char *item(int index) const override { return valid(index) ? items[index].name : nullptr; }
+    virtual bool value(int index, char *buffer, unsigned int size) const { return valid(index) && items[index].value ? items[index].value(owner, buffer, size) : false; }
     int itemCount() const override { return n_items; }
     void activate(int index) override {
         if (items[index].activate) {

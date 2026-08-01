@@ -203,8 +203,9 @@ bool ToggleButton::onTouch(int x, int y)
 
 void VerticalMenu::paint(int line, int sx, int ex)
 {
+    auto &rFont = font(), &vFont = fontValue();
     line += scroll_y;
-    int fh = font().charHeight + 1;
+    int fh = rFont.charHeight + 1;
     int menuHeight = itemCount() * fh + 2;
     if (line == 0 || line == menuHeight - 1) {
         renderHorizLine(pos_x + sx, pos_x + ex, grayscale(160));
@@ -215,23 +216,49 @@ void VerticalMenu::paint(int line, int sx, int ex)
         return;
     }
     line -= 1;
-    const char *text = item(line / fh);
+    int relLine = line % fh;
+    int nItem = line / fh;
+    const char *text = item(nItem);
     if (text) {
-        int rline = line % fh;
-        if (rline == fh - 1) {
-            renderHorizLine(pos_x + sx, pos_x + ex, grayscale(40));
+        if (relLine == fh - 1) {
+            renderHorizLine(pos_x + sx, pos_x + ex, grayscale(160));
         } else {
             renderHorizLine(pos_x + sx, std::min(pos_x + sx + 1, pos_x + ex), grayscale(160));
             renderHorizLine(std::max(pos_x + sx, pos_x + ex - 1), pos_x + ex, grayscale(160));
-            TextGlyphs menuText(text, &font());
-            if (line / fh == active_item && timer > 0) {
-                int clip = -abs(timer * fh / 10 - abs(fh / 2 - rline)) / 2;
-                renderTextSpan(line % fh, pos_x + sx + 1, clip, pos_x + ex - 1, menuText, bg(), fg());
+            TextGlyphs menuText(text, &rFont);
+            char valueBuf[128];
+            bool hasValue = value(nItem, valueBuf, sizeof(valueBuf));
+            uint16_t colFg = fg(), colBg = bg(), colFgValue = fgValue();
+            int clip = 0;
+            if (nItem == active_item && timer > 0) {
+                int tv = animTime / 2 - abs(timer - animTime / 2);
+                int yv = fh / 2 - abs(relLine - fh / 2);
+                clip = -tv * yv * 12 / (animTime * fh / 4);
+                colBg = grayscale(192 - relLine * 63 / fh);
             }
             else {
-                uint16_t bgv = grayscale(224 - (line % fh) * 63 / fh);
-                renderTextSpan(line % fh, pos_x + sx + 1, 0, pos_x + ex - 1, menuText, fg(), bgv);
+                colBg = grayscale(224 - relLine * 63 / fh);
             }
+            int boundary = pos_x + ex - 1;
+            if (hasValue) {
+                // Would need ascent/descent for correct alignment.
+                TextGlyphs valueText(valueBuf, &vFont);
+                int hDiff = std::max(0, rFont.charHeight - vFont.charHeight);
+                int vClip = 0;
+                if (valueText.width()) {
+                    boundary -= valueText.width() + 2;
+                    if (boundary < (pos_x + sx + 1)) {
+                        vClip = pos_x + sx + 1 - boundary;
+                        boundary += vClip;
+                    }
+                }
+                if (relLine >= hDiff) {
+                    renderTextSpan(relLine - hDiff, boundary, vClip, pos_x + ex - 1, valueText, colFgValue, colBg);
+                } else {
+                    renderHorizLine(boundary, pos_x + ex - 1, colBg);
+                }
+            }
+            renderTextSpan(relLine, pos_x + sx + 1, clip, boundary, menuText, colFg, colBg);
         }
     } else {
         renderHorizLine(pos_x + sx, pos_x + ex, bg());
@@ -259,7 +286,7 @@ bool VerticalMenu::onTouch(int x, int y)
         if (x >= pos_x && x < pos_x + menuText.width())
         {
             active_item = line / fh;
-            timer = 10;
+            timer = animTime;
             dirty();
             drag_y = -1;
             return true;
