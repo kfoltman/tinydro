@@ -217,14 +217,16 @@ void VerticalMenu::paint(int line, int sx, int ex)
     line -= 1;
     const char *text = item(line / fh);
     if (text) {
-        if (line % fh == fh - 1) {
+        int rline = line % fh;
+        if (rline == fh - 1) {
             renderHorizLine(pos_x + sx, pos_x + ex, grayscale(40));
         } else {
             renderHorizLine(pos_x + sx, std::min(pos_x + sx + 1, pos_x + ex), grayscale(160));
             renderHorizLine(std::max(pos_x + sx, pos_x + ex - 1), pos_x + ex, grayscale(160));
             TextGlyphs menuText(text, &font());
             if (line / fh == active_item && timer > 0) {
-                renderTextSpan(line % fh, pos_x + sx + 1, 0, pos_x + ex - 1, menuText, bg(), fg());
+                int clip = -abs(timer * fh / 10 - abs(fh / 2 - rline)) / 2;
+                renderTextSpan(line % fh, pos_x + sx + 1, clip, pos_x + ex - 1, menuText, bg(), fg());
             }
             else {
                 uint16_t bgv = grayscale(224 - (line % fh) * 63 / fh);
@@ -240,9 +242,9 @@ void VerticalMenu::onTick()
 {
     if (timer > 0) {
         timer--;
+        dirty();
         if (!timer) {
             activate(active_item);
-            dirty();
         }
     }
 }
