@@ -30,7 +30,7 @@ void CalcScreen::init()
     display.width = LINE_WIDTH - 60;
     display.height = 60;
     display.flags = WF_BORDER | WF_INVERSE | WF_ALIGN_RIGHT;
-    display.setFont(&font_sans);
+    display.setFont(&font_medium);
     const char *button_text[4][6] = {
         {"7", "8", "9", CH_DIV, "(", "ESC"},
         {"4", "5", "6", CH_MUL, ")", CH_BACKSPACE},

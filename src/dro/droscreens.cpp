@@ -6,12 +6,37 @@
 #include <stdio.h>
 #include <string.h>
 
-const SimpleMenuItem<MainScreen> MainScreen::menuFunctions[] = {
-        { "Bolt circle (PCD)", [](MainScreen *screen) { screen->hideMenu(); screen->boltCircle(); } },
-        { "Line (PLD)", [](MainScreen *screen) { screen->hideMenu(); screen->holeRow(); } },
-        { "Arc", [](MainScreen *screen) { screen->hideMenu(); screen->arc(); }, [](MainScreen *screen, char *buf, unsigned size) { snprintf(buf, size, "Value"); return true; } },
-};
-const int MainScreen::numFunctions = sizeof(menuFunctions) / sizeof(menuFunctions[0]);
+BEGIN_MENU(MainScreen, Functions)
+    { "Bolt circle (PCD)", &MainScreen::boltCircle },
+    { "Line (PLD)", &MainScreen::holeRow },
+    { "Arc", &MainScreen::arc, &MainScreen::getValue },
+END_MENU(MainScreen, Functions)
+
+BEGIN_MENU(MainScreen, LineType)
+    { "Start, end, #", &MainScreen::holeRowSEC },
+    { "Pt, angle, len, #", &MainScreen::holeRowSALC },
+    { "Pt, angle, spc, #", &MainScreen::holeRowSASC },
+END_MENU(MainScreen, LineType)
+
+BEGIN_MENU(MainScreen, LineTypeSEC)
+    { "Start pos", MainScreen::dummyItem(&MainScreen::menuLineTypeSEC) },
+    { "End pos", MainScreen::dummyItem(&MainScreen::menuLineTypeSEC) },
+    { "# Holes", MainScreen::dummyItem(&MainScreen::menuLineTypeSEC) },
+END_MENU(MainScreen, LineTypeSEC)
+
+BEGIN_MENU(MainScreen, LineTypeSALC)
+    { "Start pos", MainScreen::dummyItem(&MainScreen::menuLineTypeSALC) },
+    { "Angle", MainScreen::dummyItem(&MainScreen::menuLineTypeSALC) },
+    { "Spacing", MainScreen::dummyItem(&MainScreen::menuLineTypeSALC) },
+    { "# Holes", MainScreen::dummyItem(&MainScreen::menuLineTypeSALC) },
+END_MENU(MainScreen, LineTypeSALC)
+
+BEGIN_MENU(MainScreen, LineTypeSASC)
+    { "Start pos", MainScreen::dummyItem(&MainScreen::menuLineTypeSASC) },
+    { "Angle", MainScreen::dummyItem(&MainScreen::menuLineTypeSASC) },
+    { "Spacing", MainScreen::dummyItem(&MainScreen::menuLineTypeSASC) },
+    { "# Holes", MainScreen::dummyItem(&MainScreen::menuLineTypeSASC) },
+END_MENU(MainScreen, LineTypeSASC)
 
 void MainScreen::init()
 {
@@ -39,8 +64,12 @@ void MainScreen::init()
     //x_coord.z_index = 2;
     debug_label.z_index = -1;
     add(&debug_label);
-    add(&menu);
-    menu.flags |= WF_HIDDEN;
+
+    addMenu(menuFunctions);
+    addMenu(menuLineType);
+    addMenu(menuLineTypeSEC);
+    addMenu(menuLineTypeSALC);
+    addMenu(menuLineTypeSASC);
 
     add(&buttonInc);
     add(&buttonInch);
@@ -58,8 +87,8 @@ void MainScreen::init()
     z_zero.action = [this]() { setCoord(2, 0); };
 
     buttonFunc.action = [this]() {
-        menu.flags ^= WF_HIDDEN;
-        menu.dirty();
+        menuFunctions.flags ^= WF_HIDDEN;
+        menuFunctions.dirty();
         dirty();
     };
 }
@@ -135,9 +164,64 @@ void MainScreen::setCoord(int coord, double value)
     }
 }
 
-void MainScreen::hideMenu()
+void MainScreen::addMenu(SimpleMenu<MainScreen> &widget)
 {
-    menu.flags |= WF_HIDDEN;
-    menu.dirty();
+    widget.z_index = 5;
+    widget.flags |= WF_HIDDEN;
+    add(&widget);
+}
+
+void MainScreen::hideMenu(Widget &widget)
+{
+    widget.flags |= WF_HIDDEN;
+    widget.dirty();
     dirty();
+}
+
+void MainScreen::popupMenu(SimpleMenu<MainScreen> &widget)
+{
+    widget.scrollToTop();
+    widget.flags &= ~WF_HIDDEN;
+    widget.dirty();
+    dirty();
+}
+
+bool MainScreen::getValue(char *buf, unsigned size)
+{
+    snprintf(buf, size, "Value");
+    return true;
+}
+
+void MainScreen::boltCircle()
+{
+    hideMenu(menuFunctions);
+}
+
+void MainScreen::holeRow()
+{
+    hideMenu(menuFunctions);
+    popupMenu(menuLineType);
+}
+
+void MainScreen::arc()
+{
+    hideMenu(menuFunctions);
+}
+
+void MainScreen::holeRowSEC()
+{
+    hideMenu(menuLineType);
+    popupMenu(menuLineTypeSEC);
+}
+
+void MainScreen::holeRowSALC()
+{
+    hideMenu(menuLineType);
+    popupMenu(menuLineTypeSALC);
+}
+
+void MainScreen::holeRowSASC()
+{
+    hideMenu(menuLineType);
+    popupMenu(menuLineTypeSASC);
 }

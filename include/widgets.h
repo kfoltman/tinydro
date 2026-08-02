@@ -132,8 +132,8 @@ public:
     virtual void activate(int index) {}
 
     void paint(int line, int sx, int ex) override;
-    virtual const Font &font() const { return font_lato; }
-    virtual const Font &fontValue() const { return font_small_bold; }
+    virtual const Font &font() const { return font_medium_bold; }
+    virtual const Font &fontValue() const { return font_medium; }
     virtual uint16_t bg() const { return grayscale(208); }
     virtual uint16_t fg() const { return grayscale(0); }
     virtual uint16_t fgValue() const { return (flags & WF_INVERSE) ? grayscale(192) : grayscale(64); }
@@ -141,6 +141,7 @@ public:
     void onDrag(int x, int y) override;
     void onRelease() { drag_y = -1; }
     void onTick() override;
+    void scrollToTop() { scroll_y = 0; dirty(); }
 };
 
 template<typename Owner>

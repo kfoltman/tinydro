@@ -5,6 +5,8 @@
 #include <optional>
 #include <sstream>
 
+class App;
+
 struct Coords
 {
     int x{0}, y{0}, z{0};
@@ -28,6 +30,18 @@ struct Coords
         return 0;
     }
 };
+
+#define BEGIN_MENU(screen, name) \
+    const SimpleMenuItem<screen> screen::mitems##name[] = {
+
+#define END_MENU(screen, name) \
+    }; \
+    const int screen::num##name = std::size(mitems##name);
+
+#define MENU(screen, name) \
+    static const SimpleMenuItem<screen> mitems##name[]; \
+    static const int num##name; \
+    SimpleMenu<MainScreen> menu##name{x_right_part + 10, 2, LINE_WIDTH - x_right_part - 10, SCREEN_HEIGHT - 4, mitems##name, num##name, this};
 
 class MainScreen: public Screen
 {
@@ -78,11 +92,16 @@ public:
     Button buttonFunc{x_button(3), y_buttons, width_button, height_buttons, "FUNC"};
     Button buttonSetup{x_button(4), y_buttons, width_button, height_buttons, "CONF"};
     
-    static const SimpleMenuItem<MainScreen> menuFunctions[];
-    static const int numFunctions;
+    App *app;
 
-    SimpleMenu<MainScreen> menu{x_right_part + 10, 2, LINE_WIDTH - x_right_part - 10, y_buttons - 4, menuFunctions, numFunctions, this};
+    MENU(MainScreen, Functions)
+    MENU(MainScreen, LineType)
+    MENU(MainScreen, LineTypeSEC)
+    MENU(MainScreen, LineTypeSALC)
+    MENU(MainScreen, LineTypeSASC)
 
+    MainScreen(App *_app) : app(_app) {}
+    
     void init();
     void loop();
 
@@ -95,11 +114,24 @@ public:
     double getCoord(int coord) const;
     void setCoord(int coord, double value);
 
-    void hideMenu();
+    void addMenu(SimpleMenu<MainScreen> &widget);
+    void hideMenu(Widget &widget);
+    void popupMenu(SimpleMenu<MainScreen> &widget);
 
     // Functions - not implemented yet
-    void boltCircle() {}
-    void holeRow() {}
-    void arc() {}
+    void boltCircle();
+    void holeRow();
+    void arc();
+    void holeRowSEC();
+    void holeRowSALC();
+    void holeRowSASC();
+
+    static std::function<void(MainScreen *)> dummyItem(SimpleMenu<MainScreen> MainScreen::*menu) {
+        return [menu](MainScreen *screen) {
+            screen->hideMenu(screen->*menu);
+        };
+    }
+
+    bool getValue(char *buf, unsigned int size);
 };
 

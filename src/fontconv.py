@@ -133,7 +133,8 @@ with open("bmpfont.cpp", "w") as of:
     symbols = "⌫➕➖❌➗ⁿ√½↲🖩⭡❉⟋"
     nbytes += font_export(of, 'font_lato', 'Lato', 30, antialias=True)
     #nbytes += font_export(of, 'font_serif', 'Nimbus Roman', 25, antialias=True)
-    nbytes += font_export(of, 'font_sans', 'Liberation Sans', 25, antialias=True, extra_chars=symbols)
+    nbytes += font_export(of, 'font_medium', 'Liberation Sans', 26, antialias=True, extra_chars=symbols)
+    nbytes += font_export(of, 'font_medium_bold', 'Liberation Sans', 26, weight=QFont.Weight.Bold, antialias=True, extra_chars=symbols)
     nbytes += font_export(of, 'font_small', 'Liberation Sans', 22, antialias=True, extra_chars=symbols)
     nbytes += font_export(of, 'font_small_bold', 'Liberation Sans', 22, weight=QFont.Weight.Bold, antialias=True, extra_chars=symbols)
 

@@ -30,7 +30,8 @@ uint32_t Font::textWidth(const std::string &text) const {
 
 extern Font font_lato;
 extern Font font_sans;
-extern Font font_serif;
+extern Font font_medium;
+extern Font font_medium_bold;
 extern Font font_small;
 extern Font font_small_bold;
 

@@ -73,7 +73,7 @@ Label::Label(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, 
 
 Label::Label(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, uint16_t _flags, const std::string &_text)
 : Widget{_pos_x, _pos_y, _width, _height, _flags}
-, text{_text, &font_sans}
+, text{_text, &font_medium}
 {
 }
 

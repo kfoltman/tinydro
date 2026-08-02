@@ -45,6 +45,7 @@ public:
     RealTimeClock rtc;
 #endif
 
+    App() : mainScreen(this) {}
     void init();
     void loop();
     void initThermo();
