@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <functional>
 #include <assert.h>
+#include <time.h>
 #include <unistd.h>
 #include <SDL/SDL.h>
 #include "bmpfont.h"
@@ -28,6 +29,19 @@ void Display::copy(int line, int xs, int xe, const Pixel *data)
         for (int x = xs * zoom; x < xe * zoom; ++x)
             dst[x] = data[x / zoom - xs];
     }
+}
+
+void RealTimeClock::init()
+{
+}
+
+RealTimeClock::Time RealTimeClock::getTime()
+{
+    struct timespec ts;
+    struct tm local;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    localtime_r(&ts.tv_sec, &local);
+    return Time(local.tm_year, local.tm_mon, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec, ts.tv_nsec / 1000000);
 }
 
 void stressTest()

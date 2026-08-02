@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hwdefs.h"
+#include <stdint.h>
 
 #ifdef HAS_RTC
 

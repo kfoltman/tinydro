@@ -1,7 +1,7 @@
 #include "rtc.h"
 #include <string.h>
 
-#ifdef HAS_RTC
+#ifdef HAS_STM32H7_RTC
 
 void RealTimeClock::init()
 {

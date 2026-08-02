@@ -3,6 +3,7 @@
 #ifdef DESKTOPSIM
 
 #define EEPROM_IS_EMULATED
+#define HAS_RTC
 
 #else
 
@@ -85,6 +86,7 @@
 // RTC
 #ifdef BOARD_V4
 #define HAS_RTC
+#define HAS_STM32H7_RTC
 #endif
 
 #endif

@@ -1,6 +1,10 @@
+#include "hwdefs.h"
+#include "rtc.h"
 #include "buzzer.h"
 #include "screen.h"
 #include "touchscreen.h"
+
+#include "app.h"
 #include "droscreens.h"
 #include <math.h>
 #include <stdio.h>
@@ -97,6 +101,9 @@ void MainScreen::init()
 void MainScreen::loop()
 {
     formatCoords();
+    if (menuFunctions.isShown()) {
+        menuFunctions.dirty();
+    }
 }
 
 void MainScreen::formatCoord(Label &display, int coordValue)
@@ -185,7 +192,12 @@ void MainScreen::popupMenu(SimpleMenu<MainScreen> &widget)
 
 bool MainScreen::getValue(char *buf, unsigned size)
 {
-    snprintf(buf, size, "Value");
+#ifdef HAS_RTC
+    RealTimeClock::Time t = app->rtc.getTime();
+    snprintf(buf, size, "%02d:%02d:%02d", t.hour, t.minute, t.second);
+#else
+    snprintf(buf, size, "No RTC");
+#endif
     return true;
 }
 
