@@ -35,6 +35,22 @@ void Widget::click()
     buzzer.click();
 }
 
+void Widget::hide()
+{
+    flags |= WF_HIDDEN;
+    dirty();
+    if (parent)
+        parent->updateLayout();
+}
+
+void Widget::show()
+{
+    flags &= ~WF_HIDDEN;
+    dirty();
+    if (parent)
+        parent->updateLayout();
+}
+
 void Widget::drawFrame(int line, int &sx, int &ex, uint16_t frame1, uint16_t frame2, int thickness, int padding, int &istart, int &iwidth, uint16_t bg)
 {
     if (line < thickness)

@@ -87,9 +87,10 @@ void MainScreen::init()
     z_zero.action = [this]() { setCoord(2, 0); };
 
     buttonFunc.action = [this]() {
-        menuFunctions.flags ^= WF_HIDDEN;
-        menuFunctions.dirty();
-        dirty();
+        if (menuFunctions.isShown())
+            menuFunctions.hide();
+        else
+            menuFunctions.show();
     };
 }
 
@@ -173,17 +174,13 @@ void MainScreen::addMenu(SimpleMenu<MainScreen> &widget)
 
 void MainScreen::hideMenu(Widget &widget)
 {
-    widget.flags |= WF_HIDDEN;
-    widget.dirty();
-    dirty();
+    widget.hide();
 }
 
 void MainScreen::popupMenu(SimpleMenu<MainScreen> &widget)
 {
     widget.scrollToTop();
-    widget.flags &= ~WF_HIDDEN;
-    widget.dirty();
-    dirty();
+    widget.show();
 }
 
 bool MainScreen::getValue(char *buf, unsigned size)

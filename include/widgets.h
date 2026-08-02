@@ -44,6 +44,10 @@ public:
     virtual uint16_t bg() const { return (flags & WF_INVERSE) ? grayscale(0) : grayscale(224); }
     virtual uint16_t fg() const { return (flags & WF_INVERSE) ? grayscale(224) : grayscale(0); }
 
+    void hide();
+    void show();
+    bool isShown() const { return (flags & WF_HIDDEN) == 0; }
+
     void drawFrame(int line, int &sx, int &ex, uint16_t frame1, uint16_t frame2, int thickness, int padding, int &istart, int &iwidth, uint16_t bg);
 };
 
@@ -189,6 +193,7 @@ public:
     void onDrag(int x, int y) override;
     void paint(int line, int sx, int ex) override;
     void onTick() override;
+    virtual void updateLayout() { parent->updateLayout(); }
 };
 
 struct PixelSpan
@@ -243,5 +248,18 @@ public:
     virtual void loop() = 0;
     virtual void onEvent(const TouchscreenEvent *event);
     void render(Display &display) { rcache.prepare(this); rcache.render(display); }
+    void updateLayout() { dirty(); }
 };
+
+#define BEGIN_MENU(screen, name) \
+    const SimpleMenuItem<screen> screen::mitems##name[] = {
+
+#define END_MENU(screen, name) \
+    }; \
+    const int screen::num##name = std::size(mitems##name);
+
+#define MENU(screen, name) \
+    static const SimpleMenuItem<screen> mitems##name[]; \
+    static const int num##name; \
+    SimpleMenu<MainScreen> menu##name{x_right_part + 10, 2, LINE_WIDTH - x_right_part - 10, SCREEN_HEIGHT - 4, mitems##name, num##name, this};
 

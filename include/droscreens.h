@@ -31,18 +31,6 @@ struct Coords
     }
 };
 
-#define BEGIN_MENU(screen, name) \
-    const SimpleMenuItem<screen> screen::mitems##name[] = {
-
-#define END_MENU(screen, name) \
-    }; \
-    const int screen::num##name = std::size(mitems##name);
-
-#define MENU(screen, name) \
-    static const SimpleMenuItem<screen> mitems##name[]; \
-    static const int num##name; \
-    SimpleMenu<MainScreen> menu##name{x_right_part + 10, 2, LINE_WIDTH - x_right_part - 10, SCREEN_HEIGHT - 4, mitems##name, num##name, this};
-
 class MainScreen: public Screen
 {
 public:
