@@ -362,6 +362,7 @@ void WidgetContainer::add(Widget *_child)
         p = &(*p)->next;
     *p = _child;
     _child->parent = this;
+    updateLayout();
 }
 
 bool WidgetContainer::onTouch(int x, int y)

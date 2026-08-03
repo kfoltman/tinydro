@@ -74,6 +74,9 @@ void RenderCache::prepareSpans(VerticalSection &vs)
 
 void RenderCache::prepare(WidgetContainer *_root)
 {
+    if (root == _root && !needLayout)
+        return;
+
     root = _root;
     // Note: this will not resize those structs. However, it will
     // destroy the inner vectors in vertical sections.
@@ -108,6 +111,7 @@ void RenderCache::prepare(WidgetContainer *_root)
     };
     for(auto &vs: y_sections)
         prepareSpans(vs);
+    needLayout = false;
 }
 
 void RenderCache::render(Display &display)

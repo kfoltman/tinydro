@@ -227,6 +227,7 @@ protected:
     std::vector<int16_t> y_coords;
     std::vector<VerticalSection> y_sections;
     std::vector<Widget *> active;
+    bool needLayout{true};
 
     void prepareWidgets(Widget *w, int16_t sx, int16_t ex, int16_t sy, int16_t ey);
     void prepareSpans(VerticalSection &vs);
@@ -235,6 +236,7 @@ public:
     void prepare(WidgetContainer *_root);
     void render(Display &display);
     Widget *getWidgetAt(int16_t x, int16_t y);
+    void dirty() { needLayout = true; }
 };
 
 class Screen: public WidgetContainer
@@ -248,7 +250,7 @@ public:
     virtual void loop() = 0;
     virtual void onEvent(const TouchscreenEvent *event);
     void render(Display &display) { rcache.prepare(this); rcache.render(display); }
-    void updateLayout() { dirty(); }
+    void updateLayout() { dirty(); rcache.dirty(); }
 };
 
 #define BEGIN_MENU(screen, name) \
