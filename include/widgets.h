@@ -198,7 +198,7 @@ public:
 
 struct PixelSpan
 {
-    int16_t start, end;
+    int16_t end;
     Widget *widget;
 };
 
@@ -208,13 +208,12 @@ struct VerticalSection
     std::vector<Widget *>widgets;
     std::vector<PixelSpan> spans;
     
-    inline void addSpan(int16_t start, int16_t end, Widget *widget) {
-        assert(start >= 0);
+    inline void addSpan(int16_t end, Widget *widget) {
         assert(end <= LINE_WIDTH);
-        if (!spans.empty() && spans.rbegin()->widget == widget && spans.rbegin()->end == start) {
+        if (!spans.empty() && spans.rbegin()->widget == widget) {
             spans.rbegin()->end = end;
         } else {
-            spans.push_back({start, end, widget});
+            spans.push_back({end, widget});
         }
     }
 };

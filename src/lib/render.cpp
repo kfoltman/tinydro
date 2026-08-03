@@ -35,6 +35,9 @@ void RenderCache::resolve(VerticalSection &vs, int16_t xs, int16_t xe)
     int16_t x_last = xs;
     while(!active.empty() && x_last < xe) {
         Widget *next = *active.rbegin();
+        int16_t x_prev = std::max<int16_t>(next->clip_sx, x_last);
+        if (x_prev > x_last)
+            vs.addSpan(x_prev, nullptr);
         int16_t x_next = std::min<int16_t>(next->clip_ex, xe);
         Widget *drawn = next;
         for (Widget *candidate: active) {
@@ -42,14 +45,14 @@ void RenderCache::resolve(VerticalSection &vs, int16_t xs, int16_t xe)
                 drawn = candidate;
         }
         if (x_next > x_last) {
-            vs.addSpan(x_last, x_next, drawn);
+            vs.addSpan(x_next, drawn);
             x_last = x_next;
         }
         if (next->clip_ex <= x_next)
             active.pop_back();
     }
     if (x_last < xe) {
-        vs.addSpan(x_last, xe, nullptr);
+        vs.addSpan(xe, nullptr);
     }
 }
 
@@ -123,28 +126,36 @@ void RenderCache::render(Display &display)
     for(auto const &vs: y_sections) {
         for (int line = vs.ys; line < vs.ye; ++line) {
             int x_last = 0;
+            int span_start = 0;
             for(const PixelSpan &span: vs.spans) {
                 Widget *w = span.widget;
                 bool drawn = root_changed;
                 if (w) {
                     drawn = !(w->flags & WF_UNCHANGED) || root_changed;
                     if (drawn) {
-                        w->paint(line - w->pos_y, span.start - w->pos_x, span.end - w->pos_x);
+                        w->paint(line - w->pos_y, span_start - w->pos_x, span.end - w->pos_x);
                     } else {
-                        if (x_last == span.start)
+                        if (x_last == span_start)
                             x_last = span.end;
                     }
                 } else if (root_changed) {
-                    if (span.start > x_last)
-                        display.copy(line, x_last, span.start, line_buffer + x_last);
+                    // Blank area not covered by widgets - use fill instead of copy,
+                    // but copy anything that has been drawn so far but hasn't been
+                    // copied to screen.
+                    if (span_start > x_last)
+                        display.copy(line, x_last, span_start, line_buffer + x_last);
+                    display.fill(line, span_start, span.end, 0xF800);
                     x_last = span.end;
-                    display.fill(line, span.start, span.end, 0xF800);
                 }
                 if (!drawn) {
-                    if (span.start > x_last)
-                        display.copy(line, x_last, span.start, line_buffer + x_last);
+                    // Nothing has been drawn this time, so copy anything that has
+                    // been drawn before and skip past the display area that stays the
+                    // same.
+                    if (span_start > x_last)
+                        display.copy(line, x_last, span_start, line_buffer + x_last);
                     x_last = span.end;
                 }
+                span_start = span.end;
             }
             if (x_last < LINE_WIDTH)
                 display.copy(line, x_last, LINE_WIDTH, line_buffer + x_last);
@@ -166,7 +177,7 @@ Widget *RenderCache::getWidgetAt(int16_t x, int16_t y)
     if (y >= vs.ys && y < vs.ye) {
         auto j = std::lower_bound(vs.spans.begin(), vs.spans.end(), x,
             [](const PixelSpan &span, int16_t value) -> bool { return span.end < value; } );
-        if (j != vs.spans.end() && x >= j->start && x < j->end)
+        if (j != vs.spans.end() && (j == vs.spans.begin() || x >= j[-1].end ) && x < j->end)
             return j->widget;
     }
     return nullptr;
