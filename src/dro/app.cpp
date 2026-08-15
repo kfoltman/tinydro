@@ -84,6 +84,7 @@ void App::loop()
         HAL_Delay(frame_time_setting - frame_time);
         return;
     }
+    screen_mgr.update(poll_ms - last_poll_ms);
     last_poll_ms = poll_ms;
 
 #ifdef HAS_WS2812B
