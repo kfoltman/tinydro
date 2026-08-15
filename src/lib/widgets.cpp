@@ -2,9 +2,7 @@
 #include "gfx.h"
 #include "widgets.h"
 
-// TODO:
-// - vertical scrolling in containers
-// - span management
+RenderCache Screen::shared_rcache;
 
 Widget::Widget(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, uint16_t _flags)
 : pos_x{_pos_x}
@@ -437,7 +435,7 @@ void Screen::onEvent(const TouchscreenEvent *event)
 {
     if (event->type == TouchscreenEvent::PRESS)
     {
-        press_widget = rcache.getWidgetAt(event->x, event->y);
+        press_widget = rcache ? rcache->getWidgetAt(event->x, event->y) : nullptr;
         while(press_widget && !press_widget->onTouch(event->x, event->y))
             press_widget = press_widget->parent;
     }

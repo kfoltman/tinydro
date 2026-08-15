@@ -1,10 +1,11 @@
 #pragma once
 
+#include <bitset>
 #include <cassert>
+#include <functional>
 #include "gfx.h"
 #include "bmpfont.h"
 #include "touchscreen.h"
-#include <functional>
 
 #include "IManagedScreen.h"
 
@@ -26,13 +27,13 @@ public:
     uint16_t width, height, flags;
     int16_t z_index;
     int16_t clip_sx, clip_ex, clip_sy, clip_ey;
-    Widget *next;
+    Widget *next, *next_for_render;
     WidgetContainer *parent;
     std::function<void()> action;
-    
+
     Widget() : pos_x{}, pos_y{}, width{}, height{}, flags{}, z_index{}, next{nullptr}, parent{nullptr} {}
     Widget(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, uint16_t _flags = 0);
-    
+
     virtual void dirty() { flags &= ~WF_UNCHANGED; }
     virtual void prePaint() {}
     virtual void onTick() {}
@@ -198,41 +199,67 @@ public:
     virtual void updateLayout() { parent->updateLayout(); }
 };
 
-struct PixelSpan
-{
-    int16_t end;
-    Widget *widget;
-};
-
 struct VerticalSection
 {
     int16_t ys, ye;
-    std::vector<Widget *>widgets;
-    std::vector<PixelSpan> spans;
-    
-    inline void addSpan(int16_t end, Widget *widget) {
-        assert(end <= LINE_WIDTH);
-        if (!spans.empty() && spans.rbegin()->widget == widget) {
-            spans.rbegin()->end = end;
-        } else {
-            spans.push_back({end, widget});
-        }
-    }
+    uint16_t spanStart{}, spanEnd{};
+    uint16_t vs_widget{0xFFFF};
+};
+
+struct VSWidget
+{
+    Widget *widget;
+    uint16_t next;
 };
 
 class RenderCache
 {
 protected:
+    // Good generic defaults, maybe
+    //enum { MAX_SPANS = 512, MAX_LAYERS = 32, MAX_VS_WIDGETS = 256, MAX_WIDGETS_PER_LINE = 128 };
+    // Sufficient for now
+    enum { MAX_SPANS = 128, MAX_LAYERS = 32, MAX_VS_WIDGETS = 128, MAX_WIDGETS_PER_LINE = 64 };
     WidgetContainer *root;
-    std::vector<Widget *> all_widgets;
-    std::vector<int16_t> y_coords;
-    std::vector<VerticalSection> y_sections;
-    std::vector<Widget *> active;
     bool needLayout{true};
+
+    // Persistent output of prepare() - needed for drawing and collision detection
+    std::array<VerticalSection, SCREEN_HEIGHT> y_sections;
+    std::array<uint16_t, MAX_SPANS> spanEnd;
+    std::array<Widget *, MAX_SPANS> spanWidget;
+    uint16_t num_y_sections{0};
+    uint16_t num_spans{0};
+
+    // Temporary data structures used in the prepare method (this memory could be shared with other things
+    // if I *really* run out of RAM; or could be allocated on stack if I can guarantee that the stack
+    // is large enough)
+    Widget *all_widgets; // intrusive linked list
+    std::bitset<SCREEN_HEIGHT + 1> touched;
+    std::array<int16_t, SCREEN_HEIGHT + 1> y_coords;
+    std::array<Widget *, MAX_LAYERS> active;
+    std::array<VSWidget, MAX_VS_WIDGETS> vs_widgets;
+    std::array<Widget *, MAX_WIDGETS_PER_LINE> prep_widgets;
+    uint16_t num_active{0};
+    uint16_t num_vs_widgets{0};
 
     void prepareWidgets(Widget *w, int16_t sx, int16_t ex, int16_t sy, int16_t ey);
     void prepareSpans(VerticalSection &vs);
     void resolve(VerticalSection &vs, int16_t xs, int16_t xe);
+    inline void addSpan(VerticalSection &vs, int16_t end, Widget *widget) {
+        assert(end <= LINE_WIDTH);
+        if (num_spans >= MAX_SPANS)
+            return;
+        if (vs.spanStart != vs.spanEnd && spanWidget[vs.spanEnd - 1] == widget) {
+            spanEnd[vs.spanEnd - 1] = end;
+        } else {
+            spanEnd[num_spans] = end;
+            spanWidget[num_spans++] = widget;
+            vs.spanEnd = num_spans;
+        }
+    }
+    inline void addWidget(VerticalSection &vs, Widget *widget) {
+        vs_widgets[num_vs_widgets] = VSWidget{widget, vs.vs_widget};
+        vs.vs_widget = num_vs_widgets++;
+    }
 public:
     void prepare(WidgetContainer *_root);
     void render(Display &display);
@@ -243,21 +270,37 @@ public:
 class Screen: public WidgetContainer, public IManagedScreen
 {
 protected:
-    RenderCache rcache;
+    static RenderCache shared_rcache;
+    RenderCache *rcache;
     Widget *press_widget;
 public:
     // ScreenManager interface / default methods
     void begin() { init(); }
-    void start() { dirty(); }
-    bool end() { return true; }
+    void start() {
+        rcache = &shared_rcache;
+        updateLayout();
+    }
+    bool end() {
+        rcache = nullptr;
+        return true;
+    }
     void draw() {}
 public:
     Screen();
     virtual void init() = 0;
     virtual void loop() = 0;
     virtual void onEvent(const TouchscreenEvent *event);
-    void render(Display &display) { rcache.prepare(this); rcache.render(display); }
-    void updateLayout() { dirty(); rcache.dirty(); }
+    void render(Display &display) {
+        if (rcache) {
+            rcache->prepare(this);
+            rcache->render(display);
+        }
+    }
+    void updateLayout() {
+        dirty();
+        if (rcache)
+            rcache->dirty();
+    }
 };
 
 #define BEGIN_MENU(screen, name) \
