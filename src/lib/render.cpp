@@ -31,9 +31,12 @@ void RenderCache::resolve(VerticalSection &vs, int16_t xs, int16_t xe)
 {
     if (xs >= xe)
         return;
-    // Sort so that the last item is the one is the with the fewest pixels remaining to draw
-    if (num_active > 1)
-        std::sort(&active[0], &active[num_active], [](const Widget *w1, const Widget *w2) { return w1->clip_ex > w2->clip_ex; });
+    if (num_active > 1) {
+        std::sort(&active[0], &active[num_active], [](const Widget *w1, const Widget *w2) {
+            return w1->z_index < w2->z_index ||
+                (w1->z_index == w2->z_index && w1->clip_ex < w2->clip_ex);
+        });
+    }
     int16_t x_last = xs;
     while(num_active && x_last < xe) {
         Widget *next = active[num_active - 1];
@@ -42,16 +45,11 @@ void RenderCache::resolve(VerticalSection &vs, int16_t xs, int16_t xe)
             addSpan(vs, x_prev, nullptr);
         int16_t x_next = std::min<int16_t>(next->clip_ex, xe);
         Widget *drawn = next;
-        for (int i = 0; i < num_active; ++i) {
-            Widget *candidate = active[i];
-            if (candidate->z_index > drawn->z_index)
-                drawn = candidate;
-        }
         if (x_next > x_last) {
             addSpan(vs, x_next, drawn);
             x_last = x_next;
         }
-        if (next->clip_ex <= x_next)
+        while(num_active && active[num_active - 1]->clip_ex <= x_next)
             num_active--;
     }
     if (x_last < xe) {
