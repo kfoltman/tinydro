@@ -24,28 +24,26 @@ void App::init()
     rtc.init();
 #endif
 
-    mainScreen.init();
-    calcScreen.init();
     calcScreen.onEnter = [this](float value) -> std::string {
         mainScreen.setCoord(cur_coord, mainScreen.fromDisplay(value));
-        screen = &mainScreen;
-        screen->dirty();
+        screen_mgr.requestScreen(SCR_MAIN);
         return std::string();
     };
     calcScreen.onEsc = [this]() {
-        screen = &mainScreen;
-        screen->dirty();
+        screen_mgr.requestScreen(SCR_MAIN);
     };
-    calibrationScreen.init();
-
-    screen = &mainScreen;
+    screen_mgr.registerScreen(SCR_MAIN, &mainScreen);
+    screen_mgr.registerScreen(SCR_CALCULATOR, &calcScreen);
+    screen_mgr.registerScreen(SCR_CALIBRATION, &calibrationScreen);
+    screen_mgr.begin();
+    screen_mgr.setInitialScreen(SCR_MAIN);
+    screen_mgr.update(0);
 
     mainScreen.x_coord.action = [this]() { editCoord(0); };
     mainScreen.y_coord.action = [this]() { editCoord(1); };
     mainScreen.z_coord.action = [this]() { editCoord(2); };
     mainScreen.buttonSetup.action = [this]() {
-        screen = &calibrationScreen;
-        screen->dirty();
+        screen_mgr.requestScreen(SCR_CALIBRATION);
         calibrationScreen.startCalibration();
     };
     last_poll_ms = HAL_GetTick();
@@ -53,9 +51,8 @@ void App::init()
 
 void App::goToCalc(const std::string &text, double value)
 {
-    screen = &calcScreen;
+    screen_mgr.requestScreen(SCR_CALCULATOR);
     calcScreen.ask(text, value);
-    screen->dirty();
 }
 
 void App::editCoord(int coord)
@@ -92,9 +89,10 @@ void App::loop()
 #ifdef HAS_WS2812B
     constexpr uint32_t red = WS2812B::rgb(255, 0, 0);
     constexpr uint32_t black = WS2812B::rgb(0, 0, 0);
-    rgbled.colours[0] = cur_coord == 0 && screen == &calcScreen ? red : black;
-    rgbled.colours[1] = cur_coord == 1 && screen == &calcScreen ? red : black;
-    rgbled.colours[2] = cur_coord == 2 && screen == &calcScreen ? red : black;
+    bool isCalculator = screen_mgr.isCurrent(SCR_CALCULATOR);
+    rgbled.colours[0] = cur_coord == 0 && isCalculator ? red : black;
+    rgbled.colours[1] = cur_coord == 1 && isCalculator ? red : black;
+    rgbled.colours[2] = cur_coord == 2 && isCalculator ? red : black;
     rgbled.colours[3] = black;
     rgbled.update();
 #endif
@@ -114,11 +112,10 @@ void App::loop()
     touchscreen.poll(event);
     onEvent(&event);
 
-    screen->onTick();
-    screen->loop();
-    if (screen == &calibrationScreen && calibrationScreen.calibrationDone()) {
-        screen = &mainScreen;
-        screen->dirty();
+    curScreen()->onTick();
+    curScreen()->loop();
+    if (screen_mgr.isCurrent(SCR_CALIBRATION) && calibrationScreen.calibrationDone()) {
+        screen_mgr.requestScreen(SCR_MAIN);
         return;
     }
 }
@@ -130,7 +127,7 @@ void App::onKey(int key)
         case 18: editCoord(0); break;
         case 12: editCoord(1); break;
         case 6: editCoord(2); break;
-        case 0: screen = &mainScreen; screen->dirty(); break;
+        case 0: screen_mgr.requestScreen(SCR_MAIN); break;
 
 #ifdef HAS_RTC
         case 19: { RealTimeClock::Time t = rtc.getTime(); t.hour = (t.hour + 1) % 24; rtc.setTime(t); break; }
@@ -145,12 +142,12 @@ void App::onKey(int key)
 
 void App::onEvent(const TouchscreenEvent *event)
 {
-    screen->onEvent(event);
+    curScreen()->onEvent(event);
 }
 
 void App::render(Display &display)
 {
-    screen->render(display);
+    curScreen()->render(display);
 }
 
 void App::onSerialChar(char ch)

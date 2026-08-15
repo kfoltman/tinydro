@@ -18,6 +18,8 @@
   ******************************************************************************
   */
 
+#ifndef DESKTOPSIM
+
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_core.h"
 #include "usbd_cdc.h" /* Include class header file */
@@ -385,3 +387,5 @@ void OTG_FS_IRQHandler(void)
 {
     HAL_PCD_IRQHandler(&hpcd);
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef DESKTOPSIM
+
 #include "usbd_cdc.h"
 #include "usbd_desc.h"
 
@@ -98,3 +100,5 @@ public:
     bool dtr() const { return ctl_line_state & 1; }
     bool rts() const { return ctl_line_state & 2; }
 };
+
+#endif

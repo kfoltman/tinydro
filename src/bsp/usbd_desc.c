@@ -18,6 +18,8 @@
   ******************************************************************************
   */
 
+#ifndef DESKTOPSIM
+
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_core.h"
 #include "usbd_desc.h"
@@ -285,3 +287,5 @@ static void IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len)
     pbuf[2U * idx + 1] = 0U;
   }
 }
+
+#endif

@@ -2,6 +2,8 @@
 
 #include "hwdefs.h"
 
+#ifdef HAS_WS2812B
+
 extern "C" void DMA1_Stream0_IRQHandler(void);
 
 class WS2812B
@@ -23,3 +25,5 @@ public:
     void init();
     void update();
 };
+
+#endif

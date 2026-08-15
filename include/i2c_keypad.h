@@ -2,6 +2,8 @@
 
 #include "hwdefs.h"
 
+#ifdef HAS_KEYPAD
+
 class I2C_Keypad
 {
 private:
@@ -18,3 +20,4 @@ public:
     int pollFull();
 };
 
+#endif

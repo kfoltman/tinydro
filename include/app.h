@@ -16,6 +16,15 @@
 #include "rtc.h"
 #endif
 
+#include "ScreenManager.h"
+
+enum
+{
+    SCR_MAIN = 100,
+    SCR_CALCULATOR,
+    SCR_CALIBRATION
+};
+
 class App
 {
 protected:
@@ -31,7 +40,8 @@ public:
     MainScreen mainScreen;
     CalcScreen calcScreen;
     CalibrationScreen calibrationScreen;
-    Screen *screen;    
+    ScreenManager screen_mgr;
+
     EEPROM eeprom;
     Touchscreen touchscreen;
     Encoder encX{4}, encY{3}, encZ{2};
@@ -54,6 +64,8 @@ public:
     void onSerialChar(char ch);
     void render(Display &display);
     void updateEncoders();
+    template<typename ScreenType = Screen>
+    ScreenType *curScreen() { return static_cast<ScreenType *>(screen_mgr.getCurrent()); }
 };
 
 extern App app;

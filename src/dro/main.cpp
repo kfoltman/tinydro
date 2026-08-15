@@ -8,6 +8,8 @@
 #include "ws2812b.h"
 #include "i2c_keypad.h"
 
+#ifndef DESKTOPSIM
+
 #define PA12 Pin{GPIOA, 12}
 
 ILI9488LCD lcd;
@@ -332,3 +334,4 @@ int main()
     return 0;
 }
 
+#endif

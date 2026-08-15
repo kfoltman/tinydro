@@ -1,6 +1,7 @@
 #include "i2c_keypad.h"
 #include "gpio.h"
 
+#ifndef DESKTOPSIM
 #ifdef HAS_KEYPAD
 
 void I2C_Keypad::init()
@@ -76,4 +77,5 @@ int I2C_Keypad::pollFull()
     return key;
 }
 
+#endif
 #endif

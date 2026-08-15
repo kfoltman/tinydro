@@ -1,6 +1,7 @@
 #include "ili9488.h"
-
 #include "gpio.h"
+
+#ifndef DESKTOPSIM
 
 #include <algorithm>
 #include <initializer_list>
@@ -146,3 +147,5 @@ volatile uint16_t *ILI9488LCD::startPixels(uint16_t sx, uint16_t sy, uint16_t ex
     LCD_CMD(0x2C);
     return lcd_data;
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifndef DESKTOPSIM
+
 #include "usbacm.h"
 #include "gpio.h"
 #include <algorithm>
@@ -164,3 +166,5 @@ void USB_ACM::txComplete()
     outgoing_pkt_size = 0;
     tryTransmit();
 }
+
+#endif

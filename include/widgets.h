@@ -6,6 +6,8 @@
 #include "touchscreen.h"
 #include <functional>
 
+#include "IManagedScreen.h"
+
 #define WF_BORDER (1 << 0)
 #define WF_INVERSE (1 << 1)
 #define WF_ALIGN_RIGHT (1 << 4)
@@ -238,11 +240,17 @@ public:
     void dirty() { needLayout = true; }
 };
 
-class Screen: public WidgetContainer
+class Screen: public WidgetContainer, public IManagedScreen
 {
 protected:
     RenderCache rcache;
     Widget *press_widget;
+public:
+    // ScreenManager interface / default methods
+    void begin() { init(); }
+    void start() { dirty(); }
+    bool end() { return true; }
+    void draw() {}
 public:
     Screen();
     virtual void init() = 0;
