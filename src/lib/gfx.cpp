@@ -103,6 +103,71 @@ void renderTextSpan(int line, int sx, int clip, int ex, const TextGlyphs &glyphs
     renderHorizLine(std::max(sx, 0), ex, bg);
 }
 
+void renderTransparentTextSpan(int line, int sx, int clip, int ex, const TextGlyphs &glyphs, uint16_t fg, uint8_t bgalpha)
+{
+    uint32_t fgx = ((fg & 0xF800) << 8) | ((fg & 0x07E0) << 4) | (fg & 0x001F);
+    const Font &font = *glyphs.getFont();
+    const std::string &text = glyphs.getText();
+    unsigned int bmpWidth = font.xs[font.charCount];
+    unsigned int glyphRowBytes = (font.bitsPerPixel == 4) ? ((bmpWidth + 1) >> 1) : ((bmpWidth + 7) >> 3);
+    const uint8_t *glyphLine = font.bitmap->data + line * glyphRowBytes;
+    assert(sx >= 0);
+    if (clip < 0) {
+        // Left pad
+        int skip = -clip;
+        sx = std::min(sx + skip, ex);
+        if (sx >= ex)
+            return;
+        clip = 0;
+    }
+    if (line >= 0 && line < font.charHeight) {
+        Pixel *output = line_buffer + std::max(0, sx);
+        std::string::size_type i = 0;
+        // Clip whole characters quickly
+        for (; clip > 0 && i < text.length(); ++i) {
+            int glyphIndex = ((uint8_t)text[i]) - font.firstChar;
+            int charWidth = font.spaceWidth;
+            if (glyphIndex >= 0 && glyphIndex < font.charCount) {
+                charWidth = font.xs[glyphIndex + 1] - font.xs[glyphIndex];
+            }
+            if (clip < charWidth)
+                break;
+            clip -= charWidth;
+        }
+        int maxWidth = &line_buffer[ex] - output;
+        for (; i < text.length() && maxWidth > 0; ++i) {
+            int glyphIndex = ((uint8_t)text[i]) - font.firstChar;
+            int glyphWidth = font.anyCharWidth((uint8_t)text[i]);
+            int pixelsToDraw = std::min<int>(maxWidth, std::max<int>(0, glyphWidth - clip));
+            if (glyphIndex < 0 || glyphIndex >= font.charCount) {
+                // Do nothing
+            } else {
+                const int ox = font.xs[glyphIndex] + clip;
+                if (font.bitsPerPixel == 4) {
+                    for (int x = 0; x < pixelsToDraw; x++) {
+                        uint8_t alpha = (glyphLine[(ox + x) >> 1] >> ((ox + x) & 1 ? 0 : 4)) & 15;
+                        alpha += (alpha > 7);
+                        uint16_t bg = *output;
+                        uint32_t bgx = ((bg & 0xF800) << 8) | ((bg & 0x07E0) << 4) | (bg & 0x001F);
+                        uint32_t mix = fgx * alpha + bgx * ((16 - alpha) * bgalpha >> 4);
+                        *output++ = ((mix >> 12) & 0xF800) | ((mix >> 8) & 0x07E0) | ((mix >> 4) & 31);
+                    }
+                } else {
+                    for (int x = 0; x < pixelsToDraw; x++) {
+                        if (128 & (glyphLine[((ox + x) >> 3)] << ((ox + x) & 7)))
+                            output[x] = fg;
+                    }
+                    output += pixelsToDraw;
+                }
+            }
+            clip = std::max(0, clip - glyphWidth);
+            maxWidth -= pixelsToDraw;
+        }
+        sx = output - line_buffer;
+    }
+    renderBgAlphaHorizLine(std::max(sx, 0), ex, bgalpha);
+}
+
 void TextGlyphs::setFont(const Font *_font)
 {
     if (font == _font)

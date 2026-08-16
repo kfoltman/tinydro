@@ -60,6 +60,20 @@ static inline void renderHorizLine(int sx, int ex, uint16_t bg)
         line_buffer[sx++] = bg;
 }
 
+static inline void renderBgAlphaHorizLine(int sx, int ex, uint8_t bgalpha)
+{
+    if (!bgalpha) {
+        renderHorizLine(sx, ex, 0);
+        return;
+    }
+    while(sx < ex) {
+        uint16_t bg = line_buffer[sx];
+        uint32_t bgx = ((bg & 0xF800) << 8) | ((bg & 0x07E0) << 4) | (bg & 0x001F);
+        uint32_t mix = bgx * bgalpha;
+        line_buffer[sx++] = ((mix >> 12) & 0xF800) | ((mix >> 8) & 0x07E0) | ((mix >> 4) & 31);
+    }
+}
+
 static inline void renderHorizLineClipped(int pos_x, int sx, int ex, int sxClip, int exClip, uint16_t bg)
 {
     sx = pos_x + std::max(sx, sxClip);

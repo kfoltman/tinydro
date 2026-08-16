@@ -15,6 +15,7 @@
 #define WF_ALIGN_CENTRE (1 << 5)
 #define WF_PANX (1 << 6)
 #define WF_PANY (1 << 7)
+#define WF_SEETHRU (1 << 13)
 #define WF_HIDDEN (1 << 14)
 #define WF_UNCHANGED (1 << 15)
 
@@ -45,7 +46,7 @@ public:
     virtual void postPaint() { flags |= WF_UNCHANGED; }
     virtual bool isContainer() const { return false; }
     virtual uint16_t bg() const { return (flags & WF_INVERSE) ? grayscale(0) : grayscale(224); }
-    virtual uint16_t fg() const { return (flags & WF_INVERSE) ? grayscale(224) : grayscale(0); }
+    virtual uint16_t fg() const { return (flags & WF_INVERSE) ? grayscale(224) : (flags & WF_SEETHRU ? rgb565(31, 0, 31) : grayscale(0)); }
 
     void hide();
     void show();
@@ -219,13 +220,14 @@ protected:
     //enum { MAX_SPANS = 512, MAX_LAYERS = 32, MAX_VS_WIDGETS = 256, MAX_WIDGETS_PER_LINE = 128 };
     // Sufficient for now
     enum { MAX_SPANS = 128, MAX_LAYERS = 32, MAX_VS_WIDGETS = 128, MAX_WIDGETS_PER_LINE = 64 };
+    static constexpr uint16_t SPAN_STACK = 0x8000;
     WidgetContainer *root;
     bool needLayout{true};
 
     // Persistent output of prepare() - needed for drawing and collision detection
     std::array<VerticalSection, SCREEN_HEIGHT> y_sections;
-    std::array<uint16_t, MAX_SPANS> spanEnd;
-    std::array<Widget *, MAX_SPANS> spanWidget;
+    std::array<uint16_t, MAX_SPANS> span_end;
+    std::array<Widget *, MAX_SPANS> span_widget;
     uint16_t num_y_sections{0};
     uint16_t num_spans{0};
 
@@ -248,13 +250,24 @@ protected:
         assert(end <= LINE_WIDTH);
         if (num_spans >= MAX_SPANS)
             return;
-        if (vs.spanStart != vs.spanEnd && spanWidget[vs.spanEnd - 1] == widget) {
-            spanEnd[vs.spanEnd - 1] = end;
+        if (vs.spanStart != vs.spanEnd && span_widget[vs.spanEnd - 1] == widget) {
+            span_end[vs.spanEnd - 1] = end;
         } else {
-            spanEnd[num_spans] = end;
-            spanWidget[num_spans++] = widget;
+            span_end[num_spans] = end;
+            span_widget[num_spans++] = widget;
             vs.spanEnd = num_spans;
         }
+    }
+    inline void addStackSpan(VerticalSection &vs, int16_t start, int16_t end, int first_solid) {
+        assert(end <= LINE_WIDTH);
+        int count = std::min<int>(MAX_SPANS - num_spans, num_active - first_solid);
+        for (int i = 0; i < count; ++i) {
+            if (active[first_solid + i]->clip_ex > start) {
+                span_end[num_spans] = end | (i == count - 1 ? 0 : SPAN_STACK);
+                span_widget[num_spans++] = active[first_solid + i];
+            }
+        }
+        vs.spanEnd = num_spans;
     }
     inline void addWidget(VerticalSection &vs, Widget *widget) {
         vs_widgets[num_vs_widgets] = VSWidget{widget, vs.vs_widget};

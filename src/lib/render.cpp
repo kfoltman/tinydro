@@ -44,9 +44,24 @@ void RenderCache::resolve(VerticalSection &vs, int16_t xs, int16_t xe)
         if (x_prev > x_last)
             addSpan(vs, x_prev, nullptr);
         int16_t x_next = std::min<int16_t>(next->clip_ex, xe);
-        Widget *drawn = next;
         if (x_next > x_last) {
-            addSpan(vs, x_next, drawn);
+            if (next->flags & WF_SEETHRU) {
+                int first_solid = 0;
+                int i;
+                for (i = num_active - 2; i >= 0; --i) {
+                    if (active[i]->flags & WF_SEETHRU) {
+                        first_solid = i;
+                        break;
+                    }
+                }
+                for (i = first_solid; i < num_active - 1; ++i) {
+                    if (active[i]->clip_ex > x_last)
+                        x_next = std::min<int16_t>(active[i]->clip_ex, x_next);
+                }
+                addStackSpan(vs, x_last, x_next, first_solid);
+            } else {
+                addSpan(vs, x_next, next);
+            }
             x_last = x_next;
         }
         while(num_active && active[num_active - 1]->clip_ex <= x_next)
@@ -149,22 +164,42 @@ void RenderCache::render(Display &display)
     for (Widget *widget = all_widgets; widget; widget = widget->next_for_render) {
         widget->prePaint();
     }
+    constexpr uint16_t bg_colour = 0xF800;
     for(int i = 0; i < num_y_sections; ++i) {
         auto &vs = y_sections[i];
         for (int line = vs.ys; line < vs.ye; ++line) {
             int x_last = 0;
             int span_start = 0;
             for(uint16_t j = vs.spanStart; j < vs.spanEnd; ++j) {
-                Widget *w = spanWidget[j];
-                int end = spanEnd[j];
+                Widget *w = span_widget[j];
+                int end = span_end[j];
+                bool stack = (end & SPAN_STACK) != 0;
+                end &= ~SPAN_STACK;
                 bool drawn = root_changed;
                 if (w) {
-                    drawn = !(w->flags & WF_UNCHANGED) || root_changed;
-                    if (drawn) {
-                        w->paint(line - w->pos_y, span_start - w->pos_x, end - w->pos_x);
+                    if (stack) {
+                        uint16_t kend = vs.spanEnd;
+                        // Redraw all if any widget in the stack needs updating
+                        for(uint16_t k = j; k < vs.spanEnd; k++) {
+                            drawn = drawn || !(span_widget[k]->flags & WF_UNCHANGED);
+                            if (!(span_end[k] & SPAN_STACK)) {
+                                kend = k + 1;
+                                break;
+                            }
+                        }
+                        if (drawn) {
+                            for (uint16_t k = j; k < kend; k++) {
+                                Widget *w = span_widget[k];
+                                w->paint(line - w->pos_y, span_start - w->pos_x, end - w->pos_x);
+                            }
+                        }
+                        // Skip the whole stack
+                        j = kend - 1;
                     } else {
-                        if (x_last == span_start)
-                            x_last = end;
+                        drawn = !(w->flags & WF_UNCHANGED) || stack || root_changed;
+                        if (drawn) {
+                            w->paint(line - w->pos_y, span_start - w->pos_x, end - w->pos_x);
+                        }
                     }
                 } else if (root_changed) {
                     // Blank area not covered by widgets - use fill instead of copy,
@@ -172,8 +207,13 @@ void RenderCache::render(Display &display)
                     // copied to screen.
                     if (span_start > x_last)
                         display.copy(line, x_last, span_start, line_buffer + x_last);
-                    display.fill(line, span_start, end, 0xF800);
-                    x_last = end;
+                    if (!stack) {
+                        display.fill(line, span_start, end, bg_colour);
+                        x_last = end;
+                    } else {
+                        // Prepare for overdrawing
+                        renderHorizLine(span_start, end, bg_colour);
+                    }
                 }
                 if (!drawn) {
                     // Nothing has been drawn this time, so copy anything that has
@@ -203,10 +243,13 @@ Widget *RenderCache::getWidgetAt(int16_t x, int16_t y)
         return nullptr;
     const VerticalSection &vs = *i;
     if (y >= vs.ys && y < vs.ye) {
-        auto *j = std::lower_bound(&spanEnd[vs.spanStart], &spanEnd[vs.spanEnd], x,
-            [](const uint16_t &spanEnd, int16_t value) -> bool { return spanEnd < value; } );
-        if (j != &spanEnd[vs.spanEnd] && (j == &spanEnd[vs.spanStart] || x >= j[-1] ) && x < *j)
-            return spanWidget[j - &spanEnd[0]];
+        auto *j = std::lower_bound(&span_end[vs.spanStart], &span_end[vs.spanEnd], x,
+            [](const uint16_t &span_end, int16_t value) -> bool {
+                return (span_end & ~SPAN_STACK) < value;
+            }
+        );
+        if (j != &span_end[vs.spanEnd] && (j == &span_end[vs.spanStart] || x >= j[-1] ) && x < *j)
+            return span_widget[j - &span_end[0]];
     }
     return nullptr;
 }

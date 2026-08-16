@@ -106,10 +106,17 @@ void Label::paint(int line, int sx, int ex)
     if (flags & WF_ALIGN_CENTRE)
         hpos = iwidth / 2 - text.width() / 2;
     int fontLine = line - (height / 2 - text.height() / 2);
-    if (fontLine >= 0 && fontLine < text.height())
-        renderTextSpan(fontLine, pos_x + sx, -hpos + sx, pos_x + ex, text, fg(), bg());
-    else
-        renderHorizLine(pos_x + sx, pos_x + ex, bg());
+    if (fontLine >= 0 && fontLine < text.height()) {
+        if (flags & WF_SEETHRU)
+            renderTransparentTextSpan(fontLine, pos_x + sx, -hpos + sx, pos_x + ex, text, fg(), 8);
+        else
+            renderTextSpan(fontLine, pos_x + sx, -hpos + sx, pos_x + ex, text, fg(), bg());
+    } else {
+        if (flags & WF_SEETHRU)
+            renderBgAlphaHorizLine(pos_x + sx, pos_x + ex, 8);
+        else
+            renderHorizLine(pos_x + sx, pos_x + ex, bg());
+    }
         
 }
 

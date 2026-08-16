@@ -54,3 +54,4 @@ public:
 };
 
 extern void renderTextSpan(int line, int sx, int clip, int ex, const TextGlyphs &text, uint16_t fg, uint32_t bg);
+extern void renderTransparentTextSpan(int line, int sx, int clip, int ex, const TextGlyphs &text, uint16_t fg, uint8_t bgalpha);
