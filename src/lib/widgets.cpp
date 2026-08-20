@@ -79,6 +79,14 @@ void Widget::drawFrame(int line, int &sx, int &ex, uint16_t frame1, uint16_t fra
     iwidth -= 2 * (thickness + padding);
 }
 
+void Widget::paintWithBackLayers(int line, int sx, int ex, Widget *widgets[], int num_widgets)
+{
+    // Default implementation: assume everything is transparent/translucent so recurse down
+    // the widget stack.
+    paintBackSpan(line, sx, ex, widgets, num_widgets, sx, ex);
+    paint(line, sx, ex);
+}
+
 Label::Label(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, uint16_t _flags, const TextGlyphs &_text)
 : Widget{_pos_x, _pos_y, _width, _height, _flags}
 , text{_text}
@@ -107,17 +115,37 @@ void Label::paint(int line, int sx, int ex)
         hpos = iwidth / 2 - text.width() / 2;
     int fontLine = line - (height / 2 - text.height() / 2);
     if (fontLine >= 0 && fontLine < text.height()) {
-        if (flags & WF_SEETHRU)
+        if (flags & WF_GLASS)
             renderTransparentTextSpan(fontLine, pos_x + sx, -hpos + sx, pos_x + ex, text, fg(), 8);
         else
             renderTextSpan(fontLine, pos_x + sx, -hpos + sx, pos_x + ex, text, fg(), bg());
     } else {
-        if (flags & WF_SEETHRU)
+        if (flags & WF_GLASS)
             renderBgAlphaHorizLine(pos_x + sx, pos_x + ex, 8);
         else
             renderHorizLine(pos_x + sx, pos_x + ex, bg());
     }
         
+}
+
+void Label::paintWithBackLayers(int line, int sx, int ex, Widget *widgets[], int num_widgets)
+{
+    if (flags & WF_GLASS) {
+        Widget::paintWithBackLayers(line, sx, ex, widgets, num_widgets);
+        paint(line, sx, ex);
+    } else {
+        int r = 16;
+        int y = r;
+        if (line < r)
+            y = line;
+        if (line >= height - r)
+            y = height - line;
+        int cy = r - y;
+        int x = r - (int)sqrtf(r * r - cy * cy);
+        paintBackSpan(line, sx, ex, widgets, num_widgets, 0, x);
+        paint(line, std::max(sx, x), std::min(ex, width - x));
+        paintBackSpan(line, sx, ex, widgets, num_widgets, width - x, width);
+    }
 }
 
 void ScrollLabel::paint(int line, int sx, int ex)

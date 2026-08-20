@@ -188,10 +188,8 @@ void RenderCache::render(Display &display)
                             }
                         }
                         if (drawn) {
-                            for (uint16_t k = j; k < kend; k++) {
-                                Widget *w = span_widget[k];
-                                w->paint(line - w->pos_y, span_start - w->pos_x, end - w->pos_x);
-                            }
+                            w = span_widget[kend - 1];
+                            w->paintWithBackLayers(line - w->pos_y, span_start - w->pos_x, end - w->pos_x, &span_widget[j], kend - j - 1);
                         }
                         // Skip the whole stack
                         j = kend - 1;

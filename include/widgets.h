@@ -3,6 +3,7 @@
 #include <bitset>
 #include <cassert>
 #include <functional>
+#include <cmath>
 #include "gfx.h"
 #include "bmpfont.h"
 #include "touchscreen.h"
@@ -15,6 +16,7 @@
 #define WF_ALIGN_CENTRE (1 << 5)
 #define WF_PANX (1 << 6)
 #define WF_PANY (1 << 7)
+#define WF_GLASS (1 << 12)
 #define WF_SEETHRU (1 << 13)
 #define WF_HIDDEN (1 << 14)
 #define WF_UNCHANGED (1 << 15)
@@ -39,6 +41,7 @@ public:
     virtual void prePaint() {}
     virtual void onTick() {}
     virtual void paint(int line, int sx, int ex) {}
+    virtual void paintWithBackLayers(int line, int sx, int ex, Widget *widgets[], int num_widgets);
     virtual bool onTouch(int x, int y);
     virtual void onRelease() {}
     virtual void onDrag(int x, int y) {}
@@ -46,13 +49,25 @@ public:
     virtual void postPaint() { flags |= WF_UNCHANGED; }
     virtual bool isContainer() const { return false; }
     virtual uint16_t bg() const { return (flags & WF_INVERSE) ? grayscale(0) : grayscale(224); }
-    virtual uint16_t fg() const { return (flags & WF_INVERSE) ? grayscale(224) : (flags & WF_SEETHRU ? rgb565(31, 0, 31) : grayscale(0)); }
+    virtual uint16_t fg() const { return (flags & WF_INVERSE) ? grayscale(224) : (flags & WF_SEETHRU ? grayscale(128) : grayscale(0)); }
 
     void hide();
     void show();
     bool isShown() const { return (flags & WF_HIDDEN) == 0; }
 
     void drawFrame(int line, int &sx, int &ex, uint16_t frame1, uint16_t frame2, int thickness, int padding, int &istart, int &iwidth, uint16_t bg);
+
+    inline void paintBackSpan(int line, int sx, int ex, Widget *widgets[], int num_widgets, int sxSpan, int exSpan) {
+        if (num_widgets) {
+            Widget *prev = widgets[num_widgets - 1];
+            int dx = pos_x - prev->pos_x;
+            int dy = pos_y - prev->pos_y;
+            sx = std::max(sx, sxSpan);
+            ex = std::min(ex, exSpan);
+            if (ex > sx)
+                prev->paintWithBackLayers(line + dy, sx + dx, ex + dx, widgets, num_widgets - 1);
+        }
+    }
 };
 
 class Label: public Widget
@@ -63,9 +78,11 @@ public:
     Label() : Widget{}, text{} {}
     Label(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, uint16_t _flags, const TextGlyphs &_text);
     Label(int16_t _pos_x, int16_t _pos_y, uint16_t _width, uint16_t _height, uint16_t _flags, const std::string &_text);
+    virtual void paintWithBackLayers(int line, int sx, int ex, Widget *widgets[], int num_widgets);
     void setText(const std::string &_text) { if (text.setText(_text)) { dirty(); } }
     void setFont(const Font *_font) { text.setFont(_font); }
     void paint(int line, int sx, int ex) override;
+    virtual uint16_t bg() const { if (flags & WF_SEETHRU) return grayscale(192); return Widget::bg(); }
 };
 
 class ScrollLabel: public Label
