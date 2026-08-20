@@ -1,0 +1,45 @@
+{
+  "build": {
+    "core": "stm32",
+    "cpu": "cortex-m4",
+    "extra_flags": "-DSTM32F427xx -DSTM32F4",
+    "f_cpu": "168000000L",
+    "mcu": "stm32f427vit6",
+    "product_line": "STM32F427xx",
+    "variant": "STM32F4xx/F427V(G-I)T_F429ZET_F429V(G-I)(T-Y)_F437V(G-I)T_F439V(G-I)(T-Y)"
+  },
+  "debug": {
+    "default_tools": [
+      "stlink"
+    ],
+    "jlink_device": "STM32F427VI",
+    "openocd_extra_args": [
+      "-c",
+      "reset_config none"
+    ],
+    "openocd_target": "stm32f4x",
+    "svd_path": "STM32F427x.svd"
+  },
+  "frameworks": [
+    "cmsis",
+    "stm32cube",
+    "libopencm3"
+  ],
+  "name": "Rev2 board with STM32F427",
+  "upload": {
+    "disable_flushing": false,
+    "maximum_ram_size": 196608,
+    "maximum_size": 514288,
+    "protocol": "stlink",
+    "protocols": [
+      "stlink",
+      "dfu",
+      "jlink"
+    ],
+    "require_upload_port": true,
+    "use_1200bps_touch": false,
+    "wait_for_upload_port": false
+  },
+  "url": "http://www.st.com/en/microcontrollers/stm32f407ve.html",
+  "vendor": "Generic"
+}
