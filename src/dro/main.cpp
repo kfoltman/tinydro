@@ -137,7 +137,7 @@ void InitClocks()
     RCC_OscInitStruct.PLL.PLLM = 5; // 25 -> 5 MHz
     RCC_OscInitStruct.PLL.PLLN = 192; // 5 * 192 = 960
     RCC_OscInitStruct.PLL.PLLFRACN = 0;
-    RCC_OscInitStruct.PLL.PLLP = 2; // 960 / 2 = 480
+    RCC_OscInitStruct.PLL.PLLP = 960 / MCU_CLOCK; // 960 / 2 = 480
     RCC_OscInitStruct.PLL.PLLQ = 20; // 960 / 20 = 48 for usb
     RCC_OscInitStruct.PLL.PLLR = 2; // 960 / 2 = 480 unused
     RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;

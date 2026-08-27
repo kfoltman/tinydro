@@ -3,7 +3,7 @@
 
 #ifdef HAS_WS2812B
 
-#define PERIOD (150 * 2)
+#define PERIOD (150 * 2 * MCU_CLOCK / 480)
 
 static const uint32_t HI = (90 * PERIOD / 125);
 static const uint32_t LO = (35 * PERIOD / 125);
