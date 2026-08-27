@@ -169,12 +169,14 @@ void RenderCache::render(Display &display)
         auto &vs = y_sections[i];
         for (int line = vs.ys; line < vs.ye; ++line) {
             int x_last = 0;
-            int span_start = 0;
+            int span_start = 0, draw_end = 0;
+            bool any_drawn = false;
             for(uint16_t j = vs.spanStart; j < vs.spanEnd; ++j) {
                 Widget *w = span_widget[j];
                 int end = span_end[j];
                 bool stack = (end & SPAN_STACK) != 0;
                 end &= ~SPAN_STACK;
+                draw_end = end;
                 bool drawn = root_changed;
                 if (w) {
                     if (stack) {
@@ -222,9 +224,13 @@ void RenderCache::render(Display &display)
                     x_last = end;
                 }
                 span_start = end;
+                any_drawn = any_drawn || drawn;
             }
-            if (x_last < LINE_WIDTH)
-                display.copy(line, x_last, LINE_WIDTH, line_buffer + x_last);
+            assert(draw_end == LINE_WIDTH);
+            display.copy(line, x_last, draw_end, line_buffer + x_last);
+            // This line has had nothing to draw, so skip all the remaining lines too.
+            if (!any_drawn)
+                break;
         }
     }
     root->flags |= WF_UNCHANGED;
