@@ -24,6 +24,9 @@ boot:
 hw:
 	(. ./activate; pio run -t upload)
     
+hw2:
+	(. ./activate; pio run && openocd -d2  -f interface/stlink.cfg  -f target/stm32h7x.cfg -c "program {.pio/build/tinydro4/firmware.elf}  verify reset; shutdown;")
+
 debug:
 	#(. ./activate; pio debug --interface=gdb -- -x .pioinit)
 	(. ./activate; piodebuggdb -- -x .pioinit)
