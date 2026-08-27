@@ -73,7 +73,8 @@ public:
     //ScrollLabel debug_label{2, y_z_axis + height_coord_row + 2, LINE_WIDTH - 4, 32, WF_BORDER, "debug"};
     //ScrollLabel debug_label{30, 40, LINE_WIDTH - 2 * 30, 64, WF_BORDER, "debug"};
     Label debug_label{LINE_WIDTH / 2, 40, LINE_WIDTH / 2, 64, WF_BORDER, "debug"};
-    //Label debug_label{110, 27, LINE_WIDTH / 2, 64, /*WF_BORDER | */WF_SEETHRU /*| WF_GLASS*/, "debug"};
+    //Label debug_label{110, 27, LINE_WIDTH / 2, 64, /*WF_BORDER | */WF_SEETHRU, "debug"};
+    //Label debug_label{110, 27, LINE_WIDTH / 2, 64, /*WF_BORDER | */WF_SEETHRU | WF_GLASS, "debug"};
 
     ToggleButton buttonInc{x_button(0), y_buttons, width_button, height_buttons, "ABS", "INC"};
     ToggleButton buttonInch{x_button(1), y_buttons, width_button, height_buttons, "mm", "inch"};
