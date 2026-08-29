@@ -85,5 +85,6 @@ int main(int argc, char *argv[])
 
         globalTime++;
     }
+    SDL_Quit();
     return 0;
 }
