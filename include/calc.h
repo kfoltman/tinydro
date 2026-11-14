@@ -27,6 +27,7 @@ public:
 public:
     void init();
     void loop();
+    void onKey(int key) override;
     void onButton(int y, int x);
     void set(const std::string &text);
     void setFloat(double value);

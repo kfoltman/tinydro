@@ -32,10 +32,10 @@ void CalcScreen::init()
     display.flags = WF_BORDER | WF_INVERSE | WF_ALIGN_RIGHT;
     display.setFont(&font_medium);
     const char *button_text[4][6] = {
-        {"7", "8", "9", CH_DIV, "(", "ESC"},
-        {"4", "5", "6", CH_MUL, ")", CH_BACKSPACE},
-        {"1", "2", "3", CH_SUB, CH_SQRT, "Fn"},
-        {"+/-", "0", ".", CH_ADD, "a" CH_PWR, CH_ENTER},
+        {CH_DIV, "7", "8", "9", "(", "ESC"},
+        {CH_MUL, "4", "5", "6", ")", CH_BACKSPACE},
+        {CH_SUB, "1", "2", "3", CH_SQRT, "Fn"},
+        {CH_ADD, "+/-", "0", ".", "a" CH_PWR, CH_ENTER},
     };
     add(&display);
     ac_button.pos_x = LINE_WIDTH - 60 + 4;
@@ -128,10 +128,10 @@ void CalcScreen::onButton(int y, int x)
     switch(y) {
     case 0:
         switch(x) {
-            case 0: toAdd = "7"; break;
-            case 1: toAdd = "8"; break;
-            case 2: toAdd = "9"; break;
-            case 3: toAdd = "/"; break;
+            case 0: toAdd = "/"; break;
+            case 1: toAdd = "7"; break;
+            case 2: toAdd = "8"; break;
+            case 3: toAdd = "9"; break;
             case 4: toAdd = "("; break;
             case 5: 
                 if (onEsc)
@@ -143,33 +143,33 @@ void CalcScreen::onButton(int y, int x)
         break;
     case 1:
         switch(x) {
-            case 0: toAdd = "4"; break;
-            case 1: toAdd = "5"; break;
-            case 2: toAdd = "6"; break;
-            case 3: toAdd = "*"; break;
+            case 0: toAdd = "*"; break;
+            case 1: toAdd = "4"; break;
+            case 2: toAdd = "5"; break;
+            case 3: toAdd = "6"; break;
             case 4: toAdd = ")"; break;
             case 5: backspace(); break;
         }
         break;
     case 2:
         switch(x) {
-            case 0: toAdd = "1"; break;
-            case 1: toAdd = "2"; break;
-            case 2: toAdd = "3"; break;
-            case 3: 
+            case 0: 
                 toAdd = "-";
                 if (display.ghost && expression == "0") {
                     expression.clear();
                 }
                 break;
+            case 1: toAdd = "1"; break;
+            case 2: toAdd = "2"; break;
+            case 3: toAdd = "3"; break;
             case 4: toAdd = CH_SQRT; break;
         }
         break;
     case 3:
         switch(x) {
-            case 1: toAdd = "0"; break;
-            case 2: toAdd = "."; break;
-            case 3: toAdd = "+"; break;
+            case 0: toAdd = "+"; break;
+            case 2: toAdd = "0"; break;
+            case 3: toAdd = "."; break;
             case 4: toAdd = CH_PWR2; break;
             case 5: calculate(); break;
         }
@@ -201,3 +201,9 @@ void CalcScreen::calculate()
         setFloat(value.value());
 }
 
+void CalcScreen::onKey(int key)
+{
+#ifdef HAS_KEYPAD
+    onButton(3 - key / 6, key % 6);
+#endif
+}

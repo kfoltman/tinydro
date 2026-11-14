@@ -320,6 +320,7 @@ public:
     virtual void init() = 0;
     virtual void loop() = 0;
     virtual void onEvent(const TouchscreenEvent *event);
+    virtual void onKey(int key) {}
     void render(Display &display) {
         if (rcache) {
             rcache->prepare(this);

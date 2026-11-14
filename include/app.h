@@ -33,6 +33,7 @@ protected:
     std::string serial_value;
     uint16_t last_poll_ms;
 
+public:
     void editCoord(int coord);
     void goToCalc(const std::string &text, double value);
 

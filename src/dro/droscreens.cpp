@@ -234,3 +234,18 @@ void MainScreen::holeRowSASC()
     hideMenu(menuLineType);
     popupMenu(menuLineTypeSASC);
 }
+
+void MainScreen::onKey(int key)
+{
+#ifdef HAS_KEYPAD
+    switch(key) {
+        case KP_X_7: app->editCoord(0); break;
+        case KP_Y_4: app->editCoord(1); break;
+        case KP_Z_1: app->editCoord(2); break;
+        // case 0: screen_mgr.requestScreen(SCR_MAIN); break;
+
+        default:
+            break;
+    }
+#endif
+}

@@ -94,6 +94,7 @@ public:
     
     void init();
     void loop();
+    void onKey(int key) override;
 
     void formatCoords();
     void formatCoord(Label &display, int value);
